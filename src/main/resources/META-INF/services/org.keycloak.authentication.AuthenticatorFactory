@@ -1,0 +1,2 @@
+net.trexis.experts.identity.authenticator.LoginIngestionAuthenticatorFactory
+net.trexis.experts.identity.authenticator.LoginIngestionUserNameFormPasswordFactory
