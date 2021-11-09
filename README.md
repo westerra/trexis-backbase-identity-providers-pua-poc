@@ -24,6 +24,11 @@ Triggers the trexis-backbase-ingstion service on succesful authentication.
 Present OTP Channel Selectors - i.e voice,sms -  from Identity configuration. Example of configuration in Identity
 
 ```
+      INGESTION_SERVICE_HOST: "ingestion-integration-service"
+      INGESTION_SERVICE_BASEPATH: "service-api/v1"
+      INGESTION_SERVICE_INGESTION_PATH: "/ingestion"
+      INGESTION_SERVICE_PORT: "8080"
+      INGESTION_SERVICE_SCHEME: "HTTP"
       "keycloak.backbase.authenticators.otp-authenticator.communications-service-endpoint": "http://host.docker.internal:8204/identity-communication-outbound-integration-service/service-api/v1/communications/batches"
       "keycloak.backbase.authenticators.otp-authenticator.otp-channels.text.channel": "sms-otp"
       "keycloak.backbase.authenticators.otp-authenticator.otp-channels.text.from": "xxx"
