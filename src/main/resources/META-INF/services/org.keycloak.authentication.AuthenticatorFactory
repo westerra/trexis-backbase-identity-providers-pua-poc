@@ -1,2 +1,5 @@
 net.trexis.experts.identity.authenticator.LoginIngestionAuthenticatorFactory
 net.trexis.experts.identity.authenticator.LoginIngestionUserNameFormPasswordFactory
+net.trexis.experts.identity.authenticator.FbolOtpAuthenticatorFactory
+net.trexis.experts.identity.authenticator.FbolChannelSelectorAuthenticatorFactory
+net.trexis.experts.identity.authenticator.FbolSmsOtpAuthenticatorFactory

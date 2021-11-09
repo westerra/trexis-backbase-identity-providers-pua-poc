@@ -1,4 +1,0 @@
-service:
-  ingestion:
-    domain: localhost
-    port: 8181
