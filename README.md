@@ -16,6 +16,11 @@ You must implement the Authenticator as well as the AuthenticatorFactory interfa
 This file must remain in the jar that the AuthenticatorFactory implementation class is contained in.
 The file must have the fully qualified class name of all your AuthenticatorFactory classes.
 
+# Theme Setup
+Ensure freemarker templates are available when using channel selector and otp.
+
+Sample included in resources/theme.login folder
+
 # Included Authenticators
 ## Ingestion Authentication Username Password Form
 Triggers the trexis-backbase-ingstion service on succesful authentication.
