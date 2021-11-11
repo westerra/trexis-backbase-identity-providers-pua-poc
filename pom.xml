@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0"
   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-  <modelVersion>4.0.0</modelVersion>
+    <modelVersion>4.0.0</modelVersion>
 
     <groupId>net.trexis.experts</groupId>
     <artifactId>trexis-backbase-identity-providers</artifactId>
@@ -16,6 +16,14 @@
         <lombok.version>1.18.20</lombok.version>
     </properties>
 
+    <distributionManagement>
+        <repository>
+            <id>westerra-westerra</id>
+            <name>westerra-westerra</name>
+            <url>https://westerra-181741612687.d.codeartifact.us-east-2.amazonaws.com/maven/westerra/</url>
+        </repository>
+    </distributionManagement>
+
     <dependencyManagement>
         <dependencies>
             <dependency>
@@ -28,15 +36,6 @@
         </dependencies>
     </dependencyManagement>
 
-  <distributionManagement>
-    <repository>
-      <id>westerra-westerra</id>
-      <name>westerra-westerra</name>
-      <url>https://westerra-181741612687.d.codeartifact.us-east-2.amazonaws.com/maven/westerra/</url>
-    </repository>
-  </distributionManagement>
-
-  <dependencyManagement>
     <dependencies>
         <!-- BACKBASE -->
         <dependency>
