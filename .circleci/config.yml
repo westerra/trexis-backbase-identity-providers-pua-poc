@@ -61,7 +61,7 @@ jobs:
             echo 'export CODEARTIFACT_AUTH_TOKEN=$(aws codeartifact get-authorization-token --domain westerra --domain-owner 181741612687 --query authorizationToken --output text)' >> $BASH_ENV
 
       - run:
-          name: Deploy trexis-backbase-identity-ingestion-authenticator
+          name: Deploy trexis-backbase-identity-providers
           command: |
             mvn -s ~/.m2/settings.xml -f pom.xml clean install deploy
 
@@ -80,7 +80,7 @@ workflows:
   deployment:
     jobs:
       - build-and-deploy-artifact:
-          name: build-and-deploy-artifact-for-trexis-backbase-identity-ingestion-authenticator-for-develop-branch
+          name: build-and-deploy-artifact-for-trexis-backbase-identity-providers-for-develop-branch
           branch: develop
           context: bb-aws-dev
           filters:
@@ -90,7 +90,7 @@ workflows:
 
       - approval-for-creating-pr-from-develop-to-main:
           requires:
-            - build-and-deploy-artifact-for-trexis-backbase-identity-ingestion-authenticator-for-develop-branch
+            - build-and-deploy-artifact-for-trexis-backbase-identity-providers-for-develop-branch
           type: approval      
           filters:
             branches:
