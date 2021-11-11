@@ -1,2 +1,4 @@
 net.trexis.experts.identity.authenticator.LoginIngestionAuthenticatorFactory
 net.trexis.experts.identity.authenticator.LoginIngestionUserNameFormPasswordFactory
+net.trexis.experts.identity.authenticator.OtpAuthenticatorFactory
+net.trexis.experts.identity.authenticator.ChannelSelectorAuthenticatorFactory

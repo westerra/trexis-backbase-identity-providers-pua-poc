@@ -16,3 +16,35 @@ You must implement the Authenticator as well as the AuthenticatorFactory interfa
 This file must remain in the jar that the AuthenticatorFactory implementation class is contained in.
 The file must have the fully qualified class name of all your AuthenticatorFactory classes.
 
+# Theme Setup
+Ensure freemarker templates are available when using channel selector and otp.
+
+Sample included in resources/theme.login folder
+
+# Included Authenticators
+## Ingestion Authentication Username Password Form
+Triggers the trexis-backbase-ingstion service on succesful authentication.
+## Login Ingestion Authenticator
+## Channel Selector
+Present OTP Channel Selectors - i.e voice,sms -  from Identity configuration. Example of configuration in Identity
+
+```
+      INGESTION_SERVICE_HOST: "ingestion-integration-service"
+      INGESTION_SERVICE_BASEPATH: "service-api/v1"
+      INGESTION_SERVICE_INGESTION_PATH: "/ingestion"
+      INGESTION_SERVICE_PORT: "8080"
+      INGESTION_SERVICE_SCHEME: "HTTP"
+      "keycloak.backbase.authenticators.otp-authenticator.communications-service-endpoint": "http://host.docker.internal:8204/identity-communication-outbound-integration-service/service-api/v1/communications/batches"
+      "keycloak.backbase.authenticators.otp-authenticator.otp-channels.text.channel": "sms-otp"
+      "keycloak.backbase.authenticators.otp-authenticator.otp-channels.text.from": "xxx"
+      "keycloak.backbase.authenticators.otp-authenticator.otp-channels.text.identity-attributes.smsMobile1": "1"
+      "keycloak.backbase.authenticators.otp-authenticator.otp-channels.text.identity-attributes.smsMobile2": "2"
+      "keycloak.backbase.authenticators.otp-authenticator.otp-channels.voice.channel": "voice-otp"
+      "keycloak.backbase.authenticators.otp-authenticator.otp-channels.voice.from": "xxx"
+      "keycloak.backbase.authenticators.otp-authenticator.otp-channels.voice.identity-attributes.voiceMobile1": "10"
+      "keycloak.backbase.authenticators.otp-authenticator.otp-channels.voice.identity-attributes.voiceMobile2": "11"
+```
+## OTP Authenticator
+Sends OTP to communication outbound
+
+
