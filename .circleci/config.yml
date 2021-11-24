@@ -87,21 +87,3 @@ workflows:
             branches:
               only:
                 - develop
-
-      - approval-for-creating-pr-from-develop-to-main:
-          requires:
-            - build-and-deploy-artifact-for-trexis-backbase-identity-providers-for-develop-branch
-          type: approval      
-          filters:
-            branches:
-              only:
-                - develop
-
-      - create-pr-from-develop-to-main:
-          requires:
-            - approval-for-creating-pr-from-develop-to-main
-          token: GITHUB_TOKEN       
-          filters:
-            branches:
-              only:
-                - develop
