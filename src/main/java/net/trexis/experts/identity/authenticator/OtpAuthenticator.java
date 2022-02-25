@@ -21,11 +21,13 @@ import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.RealmModel;
 import org.keycloak.models.UserModel;
 import org.keycloak.models.utils.TimeBasedOTP;
+import org.keycloak.provider.ProviderConfigProperty;
 
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
 import java.time.Duration;
 import java.time.ZonedDateTime;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -48,6 +50,7 @@ public class OtpAuthenticator implements Authenticator {
 
     OtpAuthenticator(
             KeycloakSession session,
+            List<ProviderConfigProperty> configProperties,
             OtpChannelService otpChannelService,
             SecretProvider secretProvider,
             CommunicationService communicationService,
@@ -60,13 +63,22 @@ public class OtpAuthenticator implements Authenticator {
         this.otpTemplateProviderFactory = otpTemplateProviderFactory;
         this.cacheSupplier = cacheSupplier;
         //TODO: Resent limit testing
-        this.totpConfig = new IdentityTotpConfig("HmacSHA512", 5, 1, 30, 0, 0);
+        var algorithmDefault = configProperties.stream().filter(p -> p.getName() == "trexis.otp.algorithm").findFirst().orElseThrow().getDefaultValue().toString();
+        var digitsDefault = Integer.valueOf(configProperties.stream().filter(p -> p.getName() == "trexis.otp.digits").findFirst().orElseThrow().getDefaultValue().toString());
+        var lookAheadWindowDefault = Integer.valueOf(configProperties.stream().filter(p -> p.getName() == "trexis.otp.lookAheadWindow").findFirst().orElseThrow().getDefaultValue().toString());
+        var otpPeriodDefault = Integer.valueOf(configProperties.stream().filter(p -> p.getName() == "trexis.otp.otpPeriod").findFirst().orElseThrow().getDefaultValue().toString());
+        var otpResendPeriodDefault = Integer.valueOf(configProperties.stream().filter(p -> p.getName() == "trexis.otp.otpResendPeriod").findFirst().orElseThrow().getDefaultValue().toString());
+        var otpResendLimitDefault = Integer.valueOf(configProperties.stream().filter(p -> p.getName() == "trexis.otp.otpResendLimit").findFirst().orElseThrow().getDefaultValue().toString());
+
+        this.totpConfig = new IdentityTotpConfig(algorithmDefault, digitsDefault, lookAheadWindowDefault, otpPeriodDefault, otpResendPeriodDefault, otpResendLimitDefault);
         this.timeBasedOtp = new IdentityTotpUtil().getTimeBasedOtp(totpConfig);
     }
 
     @Override
     public void authenticate(AuthenticationFlowContext context) {
         if (mfaIsRequired(context.getUser())) {
+            configureTotp(context);
+
             log.debugv("User {0} is required to do MFA", context.getUser().getUsername());
 
             String otpChoiceAddressId = context.getAuthenticationSession().getAuthNote(Constants.OTP_CHOICE_ADDRESS_ID);
@@ -147,6 +159,26 @@ public class OtpAuthenticator implements Authenticator {
     @Override
     public void close() {
         // not required
+    }
+
+    // Configure TOTP with settings from Keycloak
+    private void configureTotp(AuthenticationFlowContext context) {
+        var config = context.getAuthenticatorConfig();
+
+        if (null == config || null == config.getConfig()) {
+            log.warn("TOTP configuration does not exist.");
+            return;
+        }
+
+        var algorithm = config.getConfig().get("trexis.otp.algorithm");
+        var digits = Integer.valueOf(config.getConfig().get("trexis.otp.digits"));
+        var lookAheadWindow = Integer.valueOf(config.getConfig().get("trexis.otp.lookAheadWindow"));
+        var otpPeriod = Integer.valueOf(config.getConfig().get("trexis.otp.otpPeriod"));
+        var otpResendPeriod = Integer.valueOf(config.getConfig().get("trexis.otp.otpResendPeriod"));
+        var otpResendLimit = Integer.valueOf(config.getConfig().get("trexis.otp.otpResendLimit"));
+
+        this.totpConfig = new IdentityTotpConfig(algorithm, digits, lookAheadWindow, otpPeriod, otpResendPeriod, otpResendLimit);
+        this.timeBasedOtp = new IdentityTotpUtil().getTimeBasedOtp(totpConfig);
     }
 
     private void verifyOtpMethodAndSendOtp(AuthenticationFlowContext context, String otpChoiceAddressId) {

@@ -16,6 +16,7 @@ import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.KeycloakSessionFactory;
 import org.keycloak.provider.ProviderConfigProperty;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class OtpAuthenticatorFactory implements AuthenticatorFactory, ConfigurableAuthenticatorFactory {
@@ -38,10 +39,66 @@ public class OtpAuthenticatorFactory implements AuthenticatorFactory, Configurab
         communicationService = new CommunicationService(otpAuthenticatorConfiguration.getCommunicationsServiceEndpoint());
     }
 
+    private static final List<ProviderConfigProperty> configProperties = new ArrayList<ProviderConfigProperty>();
+
+    static {
+        ProviderConfigProperty algorithm, digits, lookAheadWindow, otpPeriod, otpResendPeriod, otpResendLimit;
+
+        algorithm = new ProviderConfigProperty();
+        algorithm.setName("trexis.otp.algorithm");
+        algorithm.setLabel("Algorithm");
+        algorithm.setType(ProviderConfigProperty.STRING_TYPE);
+        algorithm.setHelpText("Algorithm");
+        algorithm.setDefaultValue("HmacSHA512"); // Default shows up in the console, but WILL NOT be passed forward in context if a config is not created in keycloak console
+        configProperties.add(algorithm);
+
+        digits = new ProviderConfigProperty();
+        digits.setName("trexis.otp.digits");
+        digits.setLabel("Digits");
+        digits.setType(ProviderConfigProperty.STRING_TYPE);
+        digits.setHelpText("Digits");
+        digits.setDefaultValue(5);
+        configProperties.add(digits);
+
+        lookAheadWindow = new ProviderConfigProperty();
+        lookAheadWindow.setName("trexis.otp.lookAheadWindow");
+        lookAheadWindow.setLabel("Lookahead Window");
+        lookAheadWindow.setType(ProviderConfigProperty.STRING_TYPE);
+        lookAheadWindow.setHelpText("Lookahead Window");
+        lookAheadWindow.setDefaultValue(1);
+        configProperties.add(lookAheadWindow);
+
+        otpPeriod = new ProviderConfigProperty();
+        otpPeriod.setName("trexis.otp.otpPeriod");
+        otpPeriod.setLabel("OTP Period");
+        otpPeriod.setType(ProviderConfigProperty.STRING_TYPE);
+        otpPeriod.setHelpText("OTP Period");
+        otpPeriod.setDefaultValue(30);
+        configProperties.add(otpPeriod);
+
+        otpResendPeriod = new ProviderConfigProperty();
+        otpResendPeriod.setName("trexis.otp.otpResendPeriod");
+        otpResendPeriod.setLabel("OTP Resend Period");
+        otpResendPeriod.setType(ProviderConfigProperty.STRING_TYPE);
+        otpResendPeriod.setHelpText("OTP Resend Period");
+        otpResendPeriod.setDefaultValue(0);
+        configProperties.add(otpResendPeriod);
+
+        otpResendLimit = new ProviderConfigProperty();
+        otpResendLimit.setName("trexis.otp.otpResendLimit");
+        otpResendLimit.setLabel("OTP Resend Limit");
+        otpResendLimit.setType(ProviderConfigProperty.STRING_TYPE);
+        otpResendLimit.setHelpText("OTP Resend Limit");
+        otpResendLimit.setDefaultValue(0);
+        configProperties.add(otpResendLimit);
+
+    }
+
     @Override
     public Authenticator create(KeycloakSession keycloakSession) {
         return new OtpAuthenticator(
                 keycloakSession,
+                configProperties,
                 otpChannelService,
                 secretProvider,
                 communicationService,
@@ -74,7 +131,7 @@ public class OtpAuthenticatorFactory implements AuthenticatorFactory, Configurab
      */
     @Override
     public boolean isConfigurable() {
-        return false;
+        return true;
     }
 
     /**
@@ -108,7 +165,7 @@ public class OtpAuthenticatorFactory implements AuthenticatorFactory, Configurab
      */
     @Override
     public List<ProviderConfigProperty> getConfigProperties() {
-        return null;
+        return configProperties;
     }
 
     /**
