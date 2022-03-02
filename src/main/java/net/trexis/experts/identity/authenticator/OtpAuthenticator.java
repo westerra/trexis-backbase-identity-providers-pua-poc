@@ -206,6 +206,8 @@ public class OtpAuthenticator implements Authenticator {
 
     private boolean sendOtp(String otp, OtpChoice otpChoice, AuthenticationFlowContext authenticationFlowContext) {
         OtpTemplateProvider templateProvider = otpTemplateProviderFactory.create(authenticationFlowContext.getSession());
+        templateProvider.setRealm(authenticationFlowContext.getRealm());
+
         UserModel user = authenticationFlowContext.getUser();
         templateProvider.setUser(user);
         PostBatchesRequestBody postBatchesRequestBody = new PostBatchesRequestBody();
