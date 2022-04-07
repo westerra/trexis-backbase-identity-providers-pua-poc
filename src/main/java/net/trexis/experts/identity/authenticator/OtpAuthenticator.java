@@ -38,6 +38,7 @@ public class OtpAuthenticator implements Authenticator {
     private static final Logger log = Logger.getLogger(OtpAuthenticator.class);
 
     private static final String TEMPLATE = "mfa-otp.ftl";
+    private static final String MFA_REQUIRED = "mfa_required";
     private final KeycloakSession session;
     private final OtpChannelService otpChannelService;
     private final SecretProvider secretProvider;
@@ -147,8 +148,8 @@ public class OtpAuthenticator implements Authenticator {
     }
 
     private boolean mfaIsRequired(UserModel userModel) {
-        String mfaRequired = userModel.getFirstAttribute(Constants.USER_ATTRIBUTE_MFA_REQUIRED);
-        return TRUE.equalsIgnoreCase(mfaRequired);
+        return TRUE.equalsIgnoreCase(userModel.getFirstAttribute(Constants.USER_ATTRIBUTE_MFA_REQUIRED)) ||
+                userModel.getRequiredActions().contains(MFA_REQUIRED);
     }
 
     @Override
