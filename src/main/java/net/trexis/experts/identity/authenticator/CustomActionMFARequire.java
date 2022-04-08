@@ -15,6 +15,7 @@ public class CustomActionMFARequire implements RequiredActionProvider {
 
     @Override
     public void requiredActionChallenge(RequiredActionContext context) {
+        context.success();
     }
 
     @Override
