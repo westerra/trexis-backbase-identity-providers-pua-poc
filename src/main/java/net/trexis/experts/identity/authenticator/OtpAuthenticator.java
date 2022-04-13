@@ -229,6 +229,7 @@ public class OtpAuthenticator implements Authenticator {
             if (otpCorrect) {
                 context.success();
             } else {
+                //According to this message("Invalid OTP."), We are showing error message/label on UI page from template.ftl
                 issueFailureChallenge(context, "Invalid OTP.");
             }
         } else {
