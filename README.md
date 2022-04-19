@@ -47,4 +47,13 @@ Present OTP Channel Selectors - i.e voice,sms -  from Identity configuration. Ex
 ## OTP Authenticator
 Sends OTP to communication outbound
 
-
+## Enrollment
+Allow for rebase of user relationship/service agreements.  And also allow for evaluating if user should be placed in a limited/restricted state
+```
+      ENROLLMENT_SERVICE_SCHEME: "HTTP"
+      ENROLLMENT_SERVICE_HOST: "host.docker.internal"
+      ENROLLMENT_SERVICE_PORT: "8051"
+      ENROLLMENT_SERVICE_BASEPATH: "enrollment/service-api/v2"
+      ENROLLMENT_SERVICE_REBASE_PATH: "/enrollments/backbase/rebase"
+      ENROLLMENT_SERVICE_EVALUATE_LIMITED_PATH: "/enrollments/backbase/limited"
+```
