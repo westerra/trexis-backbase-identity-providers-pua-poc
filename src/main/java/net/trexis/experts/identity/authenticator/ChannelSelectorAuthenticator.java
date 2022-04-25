@@ -3,9 +3,13 @@ package net.trexis.experts.identity.authenticator;
 import com.backbase.identity.authenticators.otp.OtpChannelService;
 import com.backbase.identity.authenticators.otp.model.OtpChoice;
 import com.google.common.base.Strings;
+import com.google.gson.Gson;
 import net.trexis.experts.identity.configuration.Constants;
+import net.trexis.experts.identity.model.AccessTokenModel;
 import net.trexis.experts.identity.model.OtpChoiceRepresentation;
+import net.trexis.experts.identity.model.UserLoginDetails;
 import net.trexis.experts.identity.util.ChannelSelectorUtil;
+import okhttp3.*;
 import org.jboss.logging.Logger;
 import org.keycloak.authentication.AuthenticationFlowContext;
 import org.keycloak.authentication.AuthenticationFlowError;
@@ -13,9 +17,11 @@ import org.keycloak.authentication.Authenticator;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.RealmModel;
 import org.keycloak.models.UserModel;
-
-import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.MultivaluedMap;
+import java.io.IOException;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -25,6 +31,14 @@ import static net.trexis.experts.identity.configuration.Constants.TRUE;
 public class ChannelSelectorAuthenticator implements Authenticator {
 
     protected static final String MFA_CHOICE_TEMPLATE = "mfa-devices.ftl";
+    private static final String MFA_REQUIRED = "mfa_required";
+    private static final String GET_ACCESS_TOKEN_BASE_URL = "GET_ACCESS_TOKEN_BASE_URL";
+    private static final String GET_USER_EVENTS_BASE_URL = "GET_USER_EVENTS_BASE_URL";
+    private static final String CLIENT_ID = "CLIENT_ID";
+    private static final String USERNAME = "USERNAME";
+    private static final String PASSWORD = "PASSWORD";
+    private static final String GRANT_TYPE = "GRANT_TYPE";
+    private static final String LAST_LOGIN_DAYS = "LAST_LOGIN_DAYS";
     private static final Logger log = Logger.getLogger(ChannelSelectorAuthenticator.class);
     private final OtpChannelService otpChannelService;
 
@@ -34,6 +48,15 @@ public class ChannelSelectorAuthenticator implements Authenticator {
 
     @Override
     public void authenticate(AuthenticationFlowContext context) {
+        if(!mfaIsRequired(context.getUser())) {
+            AccessTokenModel accessTokenModel = getAccessToken(context);
+            if(!mfaIsRequired(context.getUser()) && accessTokenModel!=null) {
+                checkLastValidLogin(context,accessTokenModel);
+            } else {
+                context.getUser().addRequiredAction(MFA_REQUIRED);
+            }
+        }
+
         if (mfaIsRequired(context.getUser())) {
             resetUsersChoices(context);
             Response challenge;
@@ -63,6 +86,90 @@ public class ChannelSelectorAuthenticator implements Authenticator {
             log.debugv("User {0} is NOT required to do MFA", context.getUser().getUsername());
             context.success();
         }
+    }
+
+    private void checkLastValidLogin(AuthenticationFlowContext context, AccessTokenModel accessTokenModel) {
+        String lastLoginDaysToCheck = System.getenv(LAST_LOGIN_DAYS);
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+        LocalDate currentLocalDate = LocalDate.now().minusDays(Long.parseLong(lastLoginDaysToCheck));
+        String dateFrom = currentLocalDate.format(formatter);
+        String currentLoginIpAddress = context.getHttpRequest().getRemoteAddress();
+        String userId = context.getUser().getId();
+        String eventType = "LOGIN";
+        String getUserEventsBaseUrl = System.getenv(GET_USER_EVENTS_BASE_URL)+"?type="+eventType+"&user="+userId+"&dateFrom="+dateFrom;
+
+        OkHttpClient client = new OkHttpClient().newBuilder().build();
+        Request getUserEventsRequestRequest = new Request.Builder()
+                .url(getUserEventsBaseUrl)
+                .method("GET", null)
+                .addHeader("Content-Type", "application/json")
+                .addHeader("Authorization", "Bearer " + accessTokenModel.getAccess_token())
+                .build();
+        try {
+            okhttp3.Response getUserEventsRequestResponse = client.newCall(getUserEventsRequestRequest).execute();
+            if (getUserEventsRequestResponse.isSuccessful() && getUserEventsRequestResponse.body()!=null) {
+                String convertedObjectForUserLoginDetails = getUserEventsRequestResponse.body().string();
+                log.debug("convertedObjectForUserLoginDetails :"+convertedObjectForUserLoginDetails);
+                UserLoginDetails userLoginDetails[] = new Gson().fromJson(convertedObjectForUserLoginDetails, UserLoginDetails[].class);
+                if(userLoginDetails!=null && userLoginDetails.length>0){
+                    String lastLoginIpAddress = userLoginDetails[0].getIpAddress();
+                    if(lastLoginIpAddress.equals(currentLoginIpAddress)){
+                        log.info("Same IpAddress Found,DO NOT Setting MFA for User");
+                    } else {
+                        log.info("New IpAddress Found, Setting MFA for User");
+                        context.getUser().addRequiredAction(MFA_REQUIRED);
+                    }
+                } else {
+                    log.info("User Login Details Not Found, Setting MFA for User");
+                    context.getUser().addRequiredAction(MFA_REQUIRED);
+                }
+            } else {
+                log.info("Setting MFA for User,Due to unexpected getUserEventsRequestResponse : " + getUserEventsRequestResponse);
+                context.getUser().addRequiredAction(MFA_REQUIRED);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+            context.getUser().addRequiredAction(MFA_REQUIRED);
+        }
+    }
+
+    private AccessTokenModel getAccessToken(AuthenticationFlowContext context) {
+        String getAccessTokenBaseUrl = System.getenv(GET_ACCESS_TOKEN_BASE_URL);
+        String clientId = System.getenv(CLIENT_ID);
+        String username = System.getenv(USERNAME);
+        String password = System.getenv(PASSWORD);
+        String grantType = System.getenv(GRANT_TYPE);
+        AccessTokenModel accessTokenModel = null;
+
+        OkHttpClient client = new OkHttpClient().newBuilder().build();
+        String getAccessTokenBodyContent = "client_id=" + clientId + "&username=" + username + "&password=" + password + "&grant_type=" + grantType;
+        RequestBody getAccessTokenBody = RequestBody.create(MediaType.parse("application/x-www-form-urlencoded"), getAccessTokenBodyContent);
+        Request getAccessTokenRequest = new Request.Builder()
+                .url(getAccessTokenBaseUrl)
+                .method("POST", getAccessTokenBody)
+                .addHeader("Content-Type", "application/x-www-form-urlencoded")
+                .build();
+
+        try {
+            okhttp3.Response getAccessTokenResponse = client.newCall(getAccessTokenRequest).execute();
+            if (getAccessTokenResponse.isSuccessful()  && getAccessTokenResponse.body()!=null) {
+                String convertedObjectForAccessToken = getAccessTokenResponse.body().string();
+                if(convertedObjectForAccessToken!=null && !convertedObjectForAccessToken.isEmpty()){
+                    accessTokenModel = new Gson().fromJson(convertedObjectForAccessToken, AccessTokenModel.class);
+                    log.debug("accessTokenModel" + accessTokenModel);
+                } else {
+                    log.info("Access Token Not Found, Setting MFA for User");
+                    context.getUser().addRequiredAction(MFA_REQUIRED);
+                }
+            } else {
+                log.info("Setting MFA for User,Due to unexpected getAccessTokenResponse : " + getAccessTokenResponse);
+                context.getUser().addRequiredAction(MFA_REQUIRED);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+            context.getUser().addRequiredAction(MFA_REQUIRED);
+        }
+        return accessTokenModel;
     }
 
     protected List<OtpChoiceRepresentation> getChoiceRepresentationList(AuthenticationFlowContext context) {
@@ -124,8 +231,8 @@ public class ChannelSelectorAuthenticator implements Authenticator {
     }
 
     private boolean mfaIsRequired(UserModel userModel) {
-        String mfaRequired = userModel.getFirstAttribute(Constants.USER_ATTRIBUTE_MFA_REQUIRED);
-        return TRUE.equalsIgnoreCase(mfaRequired);
+        return TRUE.equalsIgnoreCase(userModel.getFirstAttribute(Constants.USER_ATTRIBUTE_MFA_REQUIRED)) ||
+                userModel.getRequiredActions().contains(MFA_REQUIRED);
     }
 
     @Override
