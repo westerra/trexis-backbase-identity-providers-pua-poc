@@ -8,13 +8,18 @@ import org.jboss.logging.Logger;
 import org.keycloak.events.Event;
 import org.keycloak.events.EventListenerProvider;
 import org.keycloak.events.admin.AdminEvent;
+import org.keycloak.events.admin.OperationType;
+import org.keycloak.events.admin.ResourceType;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.RealmModel;
 
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
+import static org.keycloak.events.Details.EMAIL;
 import static org.keycloak.events.Details.PREVIOUS_EMAIL;
 import static org.keycloak.events.Details.UPDATED_EMAIL;
 import static org.keycloak.events.EventType.UPDATE_EMAIL;
+import static org.keycloak.events.admin.OperationType.UPDATE;
+import static org.keycloak.events.admin.ResourceType.USER;
 
 public class UpdateProfileListenerProvider implements EventListenerProvider {
 
@@ -34,9 +39,8 @@ public class UpdateProfileListenerProvider implements EventListenerProvider {
             var previousEmail = event.getDetails().get(PREVIOUS_EMAIL);
             var updatedEmail = event.getDetails().get(UPDATED_EMAIL);
 
-            log.info("Saving updated email to core");
-            log.warn("previous email: " + previousEmail);
-            log.warn("updated email: " + updatedEmail);
+            log.debug("previous email: " + previousEmail);
+            log.debug("updated email: " + updatedEmail);
 
             RealmModel realm = keycloakSession.realms().getRealm(event.getRealmId());
             var user = keycloakSession.users().getUserById(event.getUserId(), realm);
@@ -48,12 +52,13 @@ public class UpdateProfileListenerProvider implements EventListenerProvider {
                     .value(updatedEmail);
 
             entityApi.putEntityProfile(entityId, new EntityProfile().addContactPointsItem(contactPoint), "trexis-backbase-identity-providers", null, false, false);
-            log.warn("successfully saved email to core");
+            log.info("successfully saved email to core");
         }
     }
 
     public void onEvent(AdminEvent adminEvent, boolean includeRepresentation) {
-        // Nothing to do
+        // Can be implemented to look at admin events,
+        // such as manually updating user profile in identity console
     }
 
     public void close() {
