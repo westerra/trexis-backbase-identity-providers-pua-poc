@@ -26,7 +26,7 @@ public class OtpAuthenticatorFactory implements AuthenticatorFactory, Configurab
     private static final Requirement[] requirements;
     private static final OtpAuthenticatorConfiguration otpAuthenticatorConfiguration;
     private static final SecretProvider secretProvider;
-    private static final OtpTemplateProviderFactory otpTemplateProviderFactory;
+    private static final OtpTemplateProviderImplFactory OTP_TEMPLATE_PROVIDER_IMPL_FACTORY;
     private static final OtpChannelService otpChannelService;
     private static final CommunicationService communicationService;
 
@@ -34,7 +34,7 @@ public class OtpAuthenticatorFactory implements AuthenticatorFactory, Configurab
         requirements = new Requirement[]{Requirement.REQUIRED, Requirement.DISABLED, Requirement.ALTERNATIVE};
         otpAuthenticatorConfiguration = new OtpAuthenticatorConfiguration(new OtpChannelPropertiesConverter(), ConfigProvider.getConfig());
         secretProvider = new SecretProvider();
-        otpTemplateProviderFactory = new OtpTemplateProviderFactory();
+        OTP_TEMPLATE_PROVIDER_IMPL_FACTORY = new OtpTemplateProviderImplFactory();
         otpChannelService = new OtpChannelService(otpAuthenticatorConfiguration);
         communicationService = new CommunicationService(otpAuthenticatorConfiguration.getCommunicationsServiceEndpoint());
     }
@@ -102,7 +102,7 @@ public class OtpAuthenticatorFactory implements AuthenticatorFactory, Configurab
                 otpChannelService,
                 secretProvider,
                 communicationService,
-                otpTemplateProviderFactory,
+                OTP_TEMPLATE_PROVIDER_IMPL_FACTORY,
                 new DefaultCacheSupplier());
     }
 

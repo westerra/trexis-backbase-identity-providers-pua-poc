@@ -6,13 +6,16 @@ import com.google.common.base.Strings;
 import com.google.gson.Gson;
 import net.trexis.experts.identity.configuration.Constants;
 import net.trexis.experts.identity.model.AccessTokenModel;
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
+import javax.ws.rs.core.Response;
 import net.trexis.experts.identity.model.OtpChoiceRepresentation;
 import net.trexis.experts.identity.model.UserLoginDetails;
 import net.trexis.experts.identity.util.ChannelSelectorUtil;
 import okhttp3.*;
 import org.jboss.logging.Logger;
 import org.keycloak.authentication.AuthenticationFlowContext;
-import org.keycloak.authentication.AuthenticationFlowError;
 import org.keycloak.authentication.Authenticator;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.RealmModel;
@@ -26,7 +29,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+
+import static net.trexis.experts.identity.configuration.Constants.OTP_CHOICE_ADDRESS_ID;
 import static net.trexis.experts.identity.configuration.Constants.TRUE;
+import static net.trexis.experts.identity.configuration.Constants.USER_ATTRIBUTE_MFA_REQUIRED;
+import static org.keycloak.authentication.AuthenticationFlowError.INVALID_CREDENTIALS;
 
 public class ChannelSelectorAuthenticator implements Authenticator {
 
@@ -40,6 +47,7 @@ public class ChannelSelectorAuthenticator implements Authenticator {
     private static final String GRANT_TYPE = "GRANT_TYPE";
     private static final String LAST_LOGIN_DAYS = "LAST_LOGIN_DAYS";
     private static final Logger log = Logger.getLogger(ChannelSelectorAuthenticator.class);
+
     private final OtpChannelService otpChannelService;
 
     public ChannelSelectorAuthenticator(OtpChannelService otpChannelService) {
@@ -85,7 +93,36 @@ public class ChannelSelectorAuthenticator implements Authenticator {
         } else {
             log.debugv("User {0} is NOT required to do MFA", context.getUser().getUsername());
             context.success();
+            return;
         }
+
+        resetUsersChoices(context);
+        var otpChoiceList = getChoiceRepresentationList(context);
+        log.debug("Choices count: " + otpChoiceList.size());
+        log.debug(otpChoiceList);
+        if (otpChoiceList.isEmpty()) {
+            log.warn("No choices found for user: " + context.getUser().getUsername());
+            context.clearUser();
+            context.challenge(context.form()
+                    .setInfo("Could not find any MFA choices associated to your account.")
+                    .createLoginUsernamePassword());
+            return;
+        }
+
+        if (otpChoiceList.size() == 1) {
+            log.debug("Only one mfa choice found, skipping selection");
+            OtpChoiceRepresentation otpChoice = otpChoiceList.stream()
+                    .findFirst()
+                    .orElseThrow();
+            context.getAuthenticationSession().setAuthNote(OTP_CHOICE_ADDRESS_ID, otpChoice.getAddressId());
+            context.success();
+            return;
+        }
+
+        Response challenge = context.form()
+                .setAttribute("otpChoiceList", otpChoiceList)
+                .createForm(MFA_CHOICE_TEMPLATE);
+        context.challenge(challenge);
     }
 
     private void checkLastValidLogin(AuthenticationFlowContext context, AccessTokenModel accessTokenModel) {
@@ -173,29 +210,28 @@ public class ChannelSelectorAuthenticator implements Authenticator {
     }
 
     protected List<OtpChoiceRepresentation> getChoiceRepresentationList(AuthenticationFlowContext context) {
-        List<OtpChoice> availableOtpChoices = otpChannelService.getAvailableOtpChoices(context);
-        List<OtpChoiceRepresentation> otpChoiceRepresentations = new ArrayList<>();
-        for (OtpChoice choice : availableOtpChoices) {
-            log.debug("OTP chose address: " + choice.getAddress() + " addressId: " + choice.getAddressId() + " channel: " + choice.getChannel());
-            otpChoiceRepresentations.add(OtpChoiceRepresentation.builder()
-                    .address(ChannelSelectorUtil.maskPhoneNumber(choice.getAddress()))
-                    .addressId(choice.getAddressId())
-                    .channel(choice.getChannel())
-                    .selected(false)
-                    .build());
-        }
-        return otpChoiceRepresentations;
+        return otpChannelService.getAvailableOtpChoices(context).stream()
+                .map(choice -> {
+                    log.debug("OTP chose address: " + choice.getAddress() +
+                            " addressId: " + choice.getAddressId() +
+                            " channel: " + choice.getChannel());
+                    return OtpChoiceRepresentation.builder()
+                            .address(ChannelSelectorUtil.maskPhoneNumber(choice.getAddress()))
+                            .addressId(choice.getAddressId())
+                            .channel(choice.getChannel())
+                            .selected(false)
+                            .build();
+                }).collect(Collectors.toList());
     }
 
     protected void resetUsersChoices(AuthenticationFlowContext context) {
         log.debug("Resetting users's choices in MFA authenticator selector.");
-        context.getAuthenticationSession().setAuthNote(Constants.OTP_CHOICE_ADDRESS_ID, null);
+        context.getAuthenticationSession().setAuthNote(OTP_CHOICE_ADDRESS_ID, null);
     }
 
     @Override
     public void action(AuthenticationFlowContext context) {
-
-        MultivaluedMap<String, String> inputData = context.getHttpRequest().getDecodedFormParameters();
+        var inputData = context.getHttpRequest().getDecodedFormParameters();
 
         if (inputData.containsKey("cancel")) {
             log.debug("form data included cancel, resetFlow called.");
@@ -203,31 +239,32 @@ public class ChannelSelectorAuthenticator implements Authenticator {
             return;
         }
 
-        String otpChoiceAddressId = inputData.getFirst(Constants.OTP_CHOICE_ADDRESS_ID);
+        String otpChoiceAddressId = inputData.getFirst(OTP_CHOICE_ADDRESS_ID);
         if (Strings.isNullOrEmpty(otpChoiceAddressId)) {
             Response challenge = context.form()
                     .setError("Selection is required.")
                     .createForm(MFA_CHOICE_TEMPLATE);
-            context.failureChallenge(AuthenticationFlowError.INVALID_CREDENTIALS, challenge);
+            context.failureChallenge(INVALID_CREDENTIALS, challenge);
             return;
         }
 
-        Optional<OtpChoice> otpChoice = findMatchingOtpChoice(context, otpChoiceAddressId);
-        if (!otpChoice.isPresent()) {
-            log.error("Could not find MFA device with id: " + otpChoiceAddressId);
-            Response challenge = context.form()
-                    .setError("Something went wrong when trying to send your code.")
-                    .createForm(MFA_CHOICE_TEMPLATE);
-            context.challenge(challenge);
-            return;
-        }
-        context.getAuthenticationSession().setAuthNote(Constants.OTP_CHOICE_ADDRESS_ID, otpChoiceAddressId);
-        context.success();
+        findMatchingOtpChoice(context, otpChoiceAddressId)
+                .ifPresentOrElse(present -> {
+                    context.getAuthenticationSession().setAuthNote(OTP_CHOICE_ADDRESS_ID, otpChoiceAddressId);
+                    context.success();
+                }, () -> {
+                    log.error("Could not find MFA device with id: " + otpChoiceAddressId);
+                    Response challenge = context.form()
+                            .setError("Something went wrong when trying to send your code.")
+                            .createForm(MFA_CHOICE_TEMPLATE);
+                    context.challenge(challenge);
+                });
     }
 
     private Optional<OtpChoice> findMatchingOtpChoice(AuthenticationFlowContext authenticationFlowContext, String otpChoiceAddressId) {
         return otpChannelService.getAvailableOtpChoices(authenticationFlowContext).stream()
-                .filter((otpChoice) -> otpChoiceAddressId.equals(otpChoice.getAddressId())).findFirst();
+                .filter(otpChoice -> otpChoiceAddressId.equals(otpChoice.getAddressId()))
+                .findFirst();
     }
 
     private boolean mfaIsRequired(UserModel userModel) {

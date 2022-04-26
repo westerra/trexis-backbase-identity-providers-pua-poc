@@ -3,6 +3,10 @@ package net.trexis.experts.identity.authenticator;
 import com.backbase.identity.authenticators.otp.exception.OtpDeliveryException;
 import com.backbase.identity.authenticators.otp.model.Content;
 import com.backbase.identity.authenticators.otp.model.OtpChoice;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import org.keycloak.email.EmailException;
 import org.keycloak.email.freemarker.FreeMarkerEmailTemplateProvider;
 import org.keycloak.email.freemarker.beans.ProfileBean;
@@ -10,22 +14,19 @@ import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.UserModel;
 import org.keycloak.theme.FreeMarkerUtil;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import static java.util.Optional.ofNullable;
 
-public class OtpTemplateProvider extends com.backbase.identity.authenticators.otp.OtpTemplateProvider {
+public class OtpTemplateProviderImpl extends com.backbase.identity.authenticators.otp.OtpTemplateProvider {
 
-    public OtpTemplateProvider(KeycloakSession session, FreeMarkerUtil freeMarker) {
+    public OtpTemplateProviderImpl(KeycloakSession session, FreeMarkerUtil freeMarker) {
         super(session, freeMarker);
     }
 
     public List<Content> getContent(OtpChoice otpChoice, String otp, UserModel userModel) {
-        Map<String, Object> otpAttributes = new HashMap();
+        Map<String, Object> otpAttributes = new HashMap<>();
         otpAttributes.put("user", new ProfileBean(userModel));
         otpAttributes.put("otp", otp);
-        String contentBody = this.getMessageBody(otpChoice, otpAttributes);
+        String contentBody = getMessageBody(otpChoice, otpAttributes);
         Content content = new Content();
         content.setContentId("0");
         content.setBody(contentBody);
@@ -33,19 +34,14 @@ public class OtpTemplateProvider extends com.backbase.identity.authenticators.ot
     }
 
     private String getMessageBody(OtpChoice otpChoice, Map<String, Object> otpAttributes) {
-        FreeMarkerEmailTemplateProvider.EmailTemplate emailTemplate = this.getEmailTemplate(otpChoice, otpAttributes);
-        String contentBody = emailTemplate.getTextBody();
-        if (contentBody == null) {
-            throw new OtpDeliveryException("Could not process message template for channel " + otpChoice.getChannel());
-        } else {
-            return contentBody;
-        }
+        return ofNullable(getEmailTemplate(otpAttributes))
+                .map(EmailTemplate::getTextBody)
+                .orElseThrow(() -> new OtpDeliveryException("Could not process message template for channel " + otpChoice.getChannel()));
     }
 
-    private FreeMarkerEmailTemplateProvider.EmailTemplate getEmailTemplate(OtpChoice otpChoice, Map<String, Object> otpAttributes) {
+    private FreeMarkerEmailTemplateProvider.EmailTemplate getEmailTemplate(Map<String, Object> otpAttributes) {
         try {
-            FreeMarkerEmailTemplateProvider.EmailTemplate emailTemplate = this.processTemplate("", Collections.emptyList(), String.format("communications-otp-email.ftl", otpChoice.getChannel()), otpAttributes);
-            return emailTemplate;
+            return processTemplate("", Collections.emptyList(), "communications-otp-email.ftl", otpAttributes);
         } catch (EmailException var5) {
             throw new OtpDeliveryException("Unable to generate OTP message", var5);
         }

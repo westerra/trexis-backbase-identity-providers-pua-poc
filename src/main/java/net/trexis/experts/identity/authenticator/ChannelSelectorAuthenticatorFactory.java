@@ -3,6 +3,7 @@ package net.trexis.experts.identity.authenticator;
 import com.backbase.identity.authenticators.otp.OtpAuthenticatorConfiguration;
 import com.backbase.identity.authenticators.otp.OtpChannelService;
 import com.backbase.identity.util.OtpChannelPropertiesConverter;
+import java.util.ArrayList;
 import org.eclipse.microprofile.config.ConfigProvider;
 import org.keycloak.Config;
 import org.keycloak.authentication.Authenticator;
@@ -15,21 +16,23 @@ import org.keycloak.provider.ProviderConfigProperty;
 
 import java.util.List;
 
+import static org.keycloak.models.AuthenticationExecutionModel.Requirement.DISABLED;
+import static org.keycloak.models.AuthenticationExecutionModel.Requirement.REQUIRED;
+
 public class ChannelSelectorAuthenticatorFactory implements AuthenticatorFactory, ConfigurableAuthenticatorFactory {
 
     public static final String PROVIDER_ID = "channel-selector";
     private static final OtpChannelService otpChannelService;
     private static final OtpAuthenticatorConfiguration otpAuthenticatorConfiguration;
+    private static final AuthenticationExecutionModel.Requirement[] requirementChoices = {
+            REQUIRED,
+            DISABLED
+    };
 
     static {
         otpAuthenticatorConfiguration = new OtpAuthenticatorConfiguration(new OtpChannelPropertiesConverter(), ConfigProvider.getConfig());
         otpChannelService = new OtpChannelService(otpAuthenticatorConfiguration);
     }
-
-    private static AuthenticationExecutionModel.Requirement[] requirementChoices = {
-            AuthenticationExecutionModel.Requirement.REQUIRED,
-            AuthenticationExecutionModel.Requirement.DISABLED
-    };
 
     @Override
     public String getDisplayType() {
@@ -63,7 +66,7 @@ public class ChannelSelectorAuthenticatorFactory implements AuthenticatorFactory
 
     @Override
     public List<ProviderConfigProperty> getConfigProperties() {
-        return null;
+        return new ArrayList<>();
     }
 
     @Override
