@@ -57,3 +57,14 @@ Allow for rebase of user relationship/service agreements.  And also allow for ev
       ENROLLMENT_SERVICE_REBASE_PATH: "/enrollments/backbase/rebase"
       ENROLLMENT_SERVICE_EVALUATE_LIMITED_PATH: "/enrollments/backbase/limited"
 ```
+## Identity Provider
+Example of configuration in Identity for Identity Provider
+```
+      GET_ACCESS_TOKEN_BASE_URL: "http://host.docker.internal:8180/auth/realms/master/protocol/openid-connect/token"
+      GET_USER_EVENTS_BASE_URL: "http://host.docker.internal:8180/auth/admin/realms/backbase/events"
+      CLIENT_ID: admin-cli
+      USERNAME: admin
+      PASSWORD: admin
+      GRANT_TYPE: password
+      LAST_LOGIN_DAYS: 5
+```
