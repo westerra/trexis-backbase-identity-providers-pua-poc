@@ -2,17 +2,19 @@ package net.trexis.experts.identity.spi.impl;
 
 import com.google.common.base.Strings;
 import net.trexis.experts.identity.spi.EnrollmentServiceProvider;
-
 import net.trexis.experts.identity.spi.EnrollmentServiceProviderFactory;
 import org.jboss.logging.Logger;
 import org.keycloak.Config;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.KeycloakSessionFactory;
 
+import static java.lang.Integer.parseInt;
+
 public class EnrollmentServiceProviderFactoryImpl implements EnrollmentServiceProviderFactory {
 
     private static final Logger log = Logger.getLogger(EnrollmentServiceProviderFactoryImpl.class);
     private static final String ID = "enrollment-service-provider";
+
     private static final String IDENTITY_ENROLLMENT_SERVICE_HOST = "ENROLLMENT_SERVICE_HOST";
     private static final String IDENTITY_ENROLLMENT_SERVICE_PORT = "ENROLLMENT_SERVICE_PORT";
     private static final String IDENTITY_ENROLLMENT_SERVICE_SCHEME = "ENROLLMENT_SERVICE_SCHEME";
@@ -20,13 +22,18 @@ public class EnrollmentServiceProviderFactoryImpl implements EnrollmentServicePr
     private static final String ENROLLMENT_SERVICE_REBASE_PATH = "ENROLLMENT_SERVICE_REBASE_PATH";
     private static final String ENROLLMENT_SERVICE_EVALUATE_LIMITED_PATH = "ENROLLMENT_SERVICE_EVALUATE_LIMITED_PATH";
 
+    private static EnrollmentServiceProperties enrollmentServiceProperties;
+
     private String enrollmentServiceHost;
     private String enrollmentServiceScheme;
     private int enrollmentServicePortValue;
     private String enrollmentServiceBasePath;
     private String enrollmentServiceRebasePath;
     private String enrollmentServiceEvaluateLimitedPath;
-    private static EnrollmentServiceProperties enrollmentServiceProperties;
+
+    public static EnrollmentServiceProperties getEnrollmentServiceProperties() {
+        return enrollmentServiceProperties;
+    }
 
     @Override
     public EnrollmentServiceProvider create(KeycloakSession keycloakSession) {
@@ -55,16 +62,15 @@ public class EnrollmentServiceProviderFactoryImpl implements EnrollmentServicePr
                 || Strings.isNullOrEmpty(enrollmentServiceScheme)) {
             throw new IllegalStateException("Environment variables for enrollment service required");
         }
-        enrollmentServicePortValue = Integer.valueOf(enrollmentServicePort);
+        enrollmentServicePortValue = parseInt(enrollmentServicePort);
 
-        enrollmentServiceProperties =
-                new EnrollmentServiceProperties(
-                        enrollmentServiceHost,
-                        enrollmentServicePortValue,
-                        enrollmentServiceScheme,
-                        enrollmentServiceBasePath,
-                        enrollmentServiceRebasePath,
-                        enrollmentServiceEvaluateLimitedPath);
+        enrollmentServiceProperties = new EnrollmentServiceProperties(
+                enrollmentServiceHost,
+                enrollmentServicePortValue,
+                enrollmentServiceScheme,
+                enrollmentServiceBasePath,
+                enrollmentServiceRebasePath,
+                enrollmentServiceEvaluateLimitedPath);
     }
 
     @Override
@@ -80,9 +86,5 @@ public class EnrollmentServiceProviderFactoryImpl implements EnrollmentServicePr
     @Override
     public String getId() {
         return ID;
-    }
-
-    public static EnrollmentServiceProperties getEnrollmentServiceProperties() {
-        return enrollmentServiceProperties;
     }
 }

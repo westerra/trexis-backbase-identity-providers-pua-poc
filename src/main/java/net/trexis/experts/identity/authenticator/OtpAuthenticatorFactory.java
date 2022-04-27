@@ -6,6 +6,8 @@ import com.backbase.identity.authenticators.otp.OtpChannelService;
 import com.backbase.identity.authenticators.otp.SecretProvider;
 import com.backbase.identity.util.DefaultCacheSupplier;
 import com.backbase.identity.util.OtpChannelPropertiesConverter;
+import java.util.ArrayList;
+import java.util.List;
 import org.eclipse.microprofile.config.ConfigProvider;
 import org.keycloak.Config;
 import org.keycloak.authentication.Authenticator;
@@ -16,8 +18,10 @@ import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.KeycloakSessionFactory;
 import org.keycloak.provider.ProviderConfigProperty;
 
-import java.util.ArrayList;
-import java.util.List;
+import static org.keycloak.models.AuthenticationExecutionModel.Requirement.ALTERNATIVE;
+import static org.keycloak.models.AuthenticationExecutionModel.Requirement.DISABLED;
+import static org.keycloak.models.AuthenticationExecutionModel.Requirement.REQUIRED;
+import static org.keycloak.provider.ProviderConfigProperty.STRING_TYPE;
 
 public class OtpAuthenticatorFactory implements AuthenticatorFactory, ConfigurableAuthenticatorFactory {
 
@@ -26,20 +30,19 @@ public class OtpAuthenticatorFactory implements AuthenticatorFactory, Configurab
     private static final Requirement[] requirements;
     private static final OtpAuthenticatorConfiguration otpAuthenticatorConfiguration;
     private static final SecretProvider secretProvider;
-    private static final OtpTemplateProviderFactory otpTemplateProviderFactory;
+    private static final OtpTemplateProviderImplFactory otpTemplateProviderImplFactory;
     private static final OtpChannelService otpChannelService;
     private static final CommunicationService communicationService;
+    private static final List<ProviderConfigProperty> configProperties = new ArrayList<>();
 
     static {
-        requirements = new Requirement[]{Requirement.REQUIRED, Requirement.DISABLED, Requirement.ALTERNATIVE};
+        requirements = new Requirement[]{REQUIRED, DISABLED, ALTERNATIVE};
         otpAuthenticatorConfiguration = new OtpAuthenticatorConfiguration(new OtpChannelPropertiesConverter(), ConfigProvider.getConfig());
         secretProvider = new SecretProvider();
-        otpTemplateProviderFactory = new OtpTemplateProviderFactory();
+        otpTemplateProviderImplFactory = new OtpTemplateProviderImplFactory();
         otpChannelService = new OtpChannelService(otpAuthenticatorConfiguration);
         communicationService = new CommunicationService(otpAuthenticatorConfiguration.getCommunicationsServiceEndpoint());
     }
-
-    private static final List<ProviderConfigProperty> configProperties = new ArrayList<ProviderConfigProperty>();
 
     static {
         ProviderConfigProperty algorithm, digits, lookAheadWindow, otpPeriod, otpResendPeriod, otpResendLimit;
@@ -47,7 +50,7 @@ public class OtpAuthenticatorFactory implements AuthenticatorFactory, Configurab
         algorithm = new ProviderConfigProperty();
         algorithm.setName("trexis.otp.algorithm");
         algorithm.setLabel("Algorithm");
-        algorithm.setType(ProviderConfigProperty.STRING_TYPE);
+        algorithm.setType(STRING_TYPE);
         algorithm.setHelpText("Algorithm");
         algorithm.setDefaultValue("HmacSHA512"); // Default shows up in the console, but WILL NOT be passed forward in context if a config is not created in keycloak console
         configProperties.add(algorithm);
@@ -55,7 +58,7 @@ public class OtpAuthenticatorFactory implements AuthenticatorFactory, Configurab
         digits = new ProviderConfigProperty();
         digits.setName("trexis.otp.digits");
         digits.setLabel("Digits");
-        digits.setType(ProviderConfigProperty.STRING_TYPE);
+        digits.setType(STRING_TYPE);
         digits.setHelpText("Digits");
         digits.setDefaultValue(5);
         configProperties.add(digits);
@@ -63,7 +66,7 @@ public class OtpAuthenticatorFactory implements AuthenticatorFactory, Configurab
         lookAheadWindow = new ProviderConfigProperty();
         lookAheadWindow.setName("trexis.otp.lookAheadWindow");
         lookAheadWindow.setLabel("Lookahead Window");
-        lookAheadWindow.setType(ProviderConfigProperty.STRING_TYPE);
+        lookAheadWindow.setType(STRING_TYPE);
         lookAheadWindow.setHelpText("Lookahead Window");
         lookAheadWindow.setDefaultValue(1);
         configProperties.add(lookAheadWindow);
@@ -71,7 +74,7 @@ public class OtpAuthenticatorFactory implements AuthenticatorFactory, Configurab
         otpPeriod = new ProviderConfigProperty();
         otpPeriod.setName("trexis.otp.otpPeriod");
         otpPeriod.setLabel("OTP Period");
-        otpPeriod.setType(ProviderConfigProperty.STRING_TYPE);
+        otpPeriod.setType(STRING_TYPE);
         otpPeriod.setHelpText("OTP Period");
         otpPeriod.setDefaultValue(30);
         configProperties.add(otpPeriod);
@@ -79,7 +82,7 @@ public class OtpAuthenticatorFactory implements AuthenticatorFactory, Configurab
         otpResendPeriod = new ProviderConfigProperty();
         otpResendPeriod.setName("trexis.otp.otpResendPeriod");
         otpResendPeriod.setLabel("OTP Resend Period");
-        otpResendPeriod.setType(ProviderConfigProperty.STRING_TYPE);
+        otpResendPeriod.setType(STRING_TYPE);
         otpResendPeriod.setHelpText("OTP Resend Period");
         otpResendPeriod.setDefaultValue(0);
         configProperties.add(otpResendPeriod);
@@ -87,11 +90,10 @@ public class OtpAuthenticatorFactory implements AuthenticatorFactory, Configurab
         otpResendLimit = new ProviderConfigProperty();
         otpResendLimit.setName("trexis.otp.otpResendLimit");
         otpResendLimit.setLabel("OTP Resend Limit");
-        otpResendLimit.setType(ProviderConfigProperty.STRING_TYPE);
+        otpResendLimit.setType(STRING_TYPE);
         otpResendLimit.setHelpText("OTP Resend Limit");
         otpResendLimit.setDefaultValue(0);
         configProperties.add(otpResendLimit);
-
     }
 
     @Override
@@ -102,14 +104,12 @@ public class OtpAuthenticatorFactory implements AuthenticatorFactory, Configurab
                 otpChannelService,
                 secretProvider,
                 communicationService,
-                otpTemplateProviderFactory,
+                otpTemplateProviderImplFactory,
                 new DefaultCacheSupplier());
     }
 
     /**
      * Friendly name for the authenticator.
-     *
-     * @return
      */
     @Override
     public String getDisplayType() {
@@ -135,9 +135,8 @@ public class OtpAuthenticatorFactory implements AuthenticatorFactory, Configurab
     }
 
     /**
-     * Allowed requirement switches. While there are four different requirement types: ALTERNATIVE, REQUIRED, OPTIONAL,
-     * DISABLED, AuthenticatorFactory implementations can limit which requirement options are shown in the admin console
-     * when defining a flow
+     * Allowed requirement switches. While there are four different requirement types: ALTERNATIVE, REQUIRED, OPTIONAL, DISABLED, AuthenticatorFactory implementations can limit
+     * which requirement options are shown in the admin console when defining a flow
      */
     @Override
     public Requirement[] getRequirementChoices() {
@@ -145,10 +144,8 @@ public class OtpAuthenticatorFactory implements AuthenticatorFactory, Configurab
     }
 
     /**
-     * Flag that tells the flow manager whether or not Authenticator.setRequiredActions() method will be called. If an
-     * Authenticator is not configured for a user, the flow manager checks isUserSetupAllowed(). If it is false, then
-     * the flow aborts with an error. If it returns true, then the flow manager will invoke
-     * Authenticator.setRequiredActions().
+     * Flag that tells the flow manager whether or not Authenticator.setRequiredActions() method will be called. If an Authenticator is not configured for a user, the flow manager
+     * checks isUserSetupAllowed(). If it is false, then the flow aborts with an error. If it returns true, then the flow manager will invoke Authenticator.setRequiredActions().
      */
     @Override
     public boolean isUserSetupAllowed() {
@@ -169,12 +166,8 @@ public class OtpAuthenticatorFactory implements AuthenticatorFactory, Configurab
     }
 
     /**
-     * Only called once when the factory is first created.
-     * This config is pulled from a number of places including but not limited to
-     * the application.yml and environment vars.
-     * The param will be scoped to keycloak.<spi-name>.<getId()>
-     *
-     * @param config
+     * Only called once when the factory is first created. This config is pulled from a number of places including but not limited to the application.yml and environment vars. The
+     * param will be scoped to keycloak.<spi-name>.<getId()>
      */
     @Override
     public void init(Config.Scope config) {
@@ -183,8 +176,6 @@ public class OtpAuthenticatorFactory implements AuthenticatorFactory, Configurab
 
     /**
      * Called after all provider factories have been initialized.
-     *
-     * @param keycloakSessionFactory
      */
     @Override
     public void postInit(KeycloakSessionFactory keycloakSessionFactory) {
@@ -201,7 +192,6 @@ public class OtpAuthenticatorFactory implements AuthenticatorFactory, Configurab
 
     /**
      * This is the name of the provider and will be shown in the admin console as an option.
-     * @return
      */
     @Override
     public String getId() {

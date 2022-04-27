@@ -5,8 +5,9 @@ import org.jboss.logging.Logger;
 import org.keycloak.models.UserModel;
 
 public class EnrollmentServiceProviderImpl implements EnrollmentServiceProvider {
+
     private static final Logger log = Logger.getLogger(EnrollmentServiceProviderFactoryImpl.class);
-    private EnrollmentServiceClient client;
+    private final EnrollmentServiceClient client;
 
     public EnrollmentServiceProviderImpl() {
         log.info("Creating Enrollment Service Provider");

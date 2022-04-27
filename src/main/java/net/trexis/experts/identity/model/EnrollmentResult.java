@@ -1,15 +1,13 @@
 package net.trexis.experts.identity.model;
+
+import lombok.Getter;
+import lombok.Setter;
+
+@Getter
+@Setter
 public class EnrollmentResult {
 
     private Boolean limited;
-
-    public Boolean getLimited() {
-        return limited;
-    }
-
-    public void setLimited(Boolean limited) {
-        this.limited = limited;
-    }
 
     @Override
     public String toString() {
