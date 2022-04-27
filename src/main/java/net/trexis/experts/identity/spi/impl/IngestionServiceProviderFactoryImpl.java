@@ -17,6 +17,7 @@ public class IngestionServiceProviderFactoryImpl implements IngestionServiceProv
     private static final String IDENTITY_INGESTION_SERVICE_SCHEME = "INGESTION_SERVICE_SCHEME";
     private static final String IDENTITY_INGESTION_SERVICE_BASEPATH = "INGESTION_SERVICE_BASEPATH";
     private static final String INGESTION_SERVICE_INGESTION_PATH = "INGESTION_SERVICE_INGESTION_PATH";
+
     private static IngestionServiceProperties ingestionServiceProperties;
     private String ingestionServiceHost;
     private String ingestionServiceScheme;

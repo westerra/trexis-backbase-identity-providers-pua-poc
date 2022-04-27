@@ -2,7 +2,6 @@ package net.trexis.experts.identity.authenticator;
 
 import com.finite.api.EntityApi;
 import com.finite.api.model.ContactPoint;
-import com.finite.api.model.ContactPoint.TypeEnum;
 import com.finite.api.model.EntityProfile;
 import org.jboss.logging.Logger;
 import org.keycloak.events.Event;
@@ -11,6 +10,7 @@ import org.keycloak.events.admin.AdminEvent;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.RealmModel;
 
+import static com.finite.api.model.ContactPoint.TypeEnum.EMAIL;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 import static org.keycloak.events.Details.PREVIOUS_EMAIL;
 import static org.keycloak.events.Details.UPDATED_EMAIL;
@@ -43,7 +43,7 @@ public class UpdateProfileListenerProvider implements EventListenerProvider {
 
             var contactPoint = new ContactPoint()
                     .name("Email")
-                    .type(TypeEnum.EMAIL)
+                    .type(EMAIL)
                     .value(updatedEmail);
 
             entityApi.putEntityProfile(entityId, new EntityProfile().addContactPointsItem(contactPoint), "trexis-backbase-identity-providers", null, false, false);

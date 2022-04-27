@@ -8,17 +8,22 @@ import org.keycloak.Config;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.KeycloakSessionFactory;
 
+import static java.lang.Integer.parseInt;
+
 public class EnrollmentServiceProviderFactoryImpl implements EnrollmentServiceProviderFactory {
 
     private static final Logger log = Logger.getLogger(EnrollmentServiceProviderFactoryImpl.class);
     private static final String ID = "enrollment-service-provider";
+
     private static final String IDENTITY_ENROLLMENT_SERVICE_HOST = "ENROLLMENT_SERVICE_HOST";
     private static final String IDENTITY_ENROLLMENT_SERVICE_PORT = "ENROLLMENT_SERVICE_PORT";
     private static final String IDENTITY_ENROLLMENT_SERVICE_SCHEME = "ENROLLMENT_SERVICE_SCHEME";
     private static final String IDENTITY_ENROLLMENT_SERVICE_BASEPATH = "ENROLLMENT_SERVICE_BASEPATH";
     private static final String ENROLLMENT_SERVICE_REBASE_PATH = "ENROLLMENT_SERVICE_REBASE_PATH";
     private static final String ENROLLMENT_SERVICE_EVALUATE_LIMITED_PATH = "ENROLLMENT_SERVICE_EVALUATE_LIMITED_PATH";
+
     private static EnrollmentServiceProperties enrollmentServiceProperties;
+
     private String enrollmentServiceHost;
     private String enrollmentServiceScheme;
     private int enrollmentServicePortValue;
@@ -57,16 +62,15 @@ public class EnrollmentServiceProviderFactoryImpl implements EnrollmentServicePr
                 || Strings.isNullOrEmpty(enrollmentServiceScheme)) {
             throw new IllegalStateException("Environment variables for enrollment service required");
         }
-        enrollmentServicePortValue = Integer.valueOf(enrollmentServicePort);
+        enrollmentServicePortValue = parseInt(enrollmentServicePort);
 
-        enrollmentServiceProperties =
-                new EnrollmentServiceProperties(
-                        enrollmentServiceHost,
-                        enrollmentServicePortValue,
-                        enrollmentServiceScheme,
-                        enrollmentServiceBasePath,
-                        enrollmentServiceRebasePath,
-                        enrollmentServiceEvaluateLimitedPath);
+        enrollmentServiceProperties = new EnrollmentServiceProperties(
+                enrollmentServiceHost,
+                enrollmentServicePortValue,
+                enrollmentServiceScheme,
+                enrollmentServiceBasePath,
+                enrollmentServiceRebasePath,
+                enrollmentServiceEvaluateLimitedPath);
     }
 
     @Override

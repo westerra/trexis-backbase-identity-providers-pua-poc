@@ -7,8 +7,8 @@ import lombok.Data;
 @Builder
 public class OtpChoiceRepresentation {
 
-    String addressId;
-    String address;
-    String channel;
-    boolean selected;
+    private String addressId;
+    private String address;
+    private String channel;
+    private boolean selected;
 }

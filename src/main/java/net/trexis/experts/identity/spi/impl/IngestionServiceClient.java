@@ -50,7 +50,6 @@ public class IngestionServiceClient {
                 log.info("Result was null");
             }
             log.info("Result: " + result);
-            // TODO Audit results
         }
     }
 }

@@ -9,9 +9,9 @@ import lombok.RequiredArgsConstructor;
 public class AccessTokenModel {
 
     @SerializedName("access_token")
-    private String access_token;
+    private String accessToken;
     @SerializedName("token_type")
-    private String token_type;
+    private String tokenType;
     @SerializedName("expires_in")
-    private Long expires_in;
+    private Long expiresIn;
 }

@@ -136,7 +136,7 @@ public class ChannelSelectorAuthenticator implements Authenticator {
                 .url(getUserEventsBaseUrl)
                 .method("GET", null)
                 .addHeader("Content-Type", "application/json")
-                .addHeader("Authorization", "Bearer " + accessTokenModel.getAccess_token())
+                .addHeader("Authorization", "Bearer " + accessTokenModel.getAccessToken())
                 .build();
         try {
             okhttp3.Response getUserEventsRequestResponse = client.newCall(getUserEventsRequestRequest).execute();
