@@ -1,21 +1,20 @@
 package net.trexis.experts.identity.spi.impl;
 
-import org.jboss.logging.Logger;
-import net.trexis.experts.identity.model.IngestionResult;
-
+import java.net.MalformedURLException;
+import java.net.URI;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.UriBuilder;
-import java.net.MalformedURLException;
-import java.net.URI;
+import net.trexis.experts.identity.model.IngestionResult;
+import org.jboss.logging.Logger;
 
 public class IngestionServiceClient {
 
     private static final Logger log = Logger.getLogger(IngestionServiceClient.class);
-    private WebTarget target;
-    private IngestionServiceProperties properties;
+    private final WebTarget target;
+    private final IngestionServiceProperties properties;
 
     public IngestionServiceClient(IngestionServiceProperties properties) {
         this.properties = properties;
@@ -27,7 +26,7 @@ public class IngestionServiceClient {
                 .scheme(properties.getScheme())
                 .build();
         try {
-            log.info("Path to ingestion: "  + uri.toURL().toString());
+            log.info("Path to ingestion: " + uri.toURL());
         } catch (MalformedURLException e) {
             e.printStackTrace();
         }
@@ -51,7 +50,6 @@ public class IngestionServiceClient {
                 log.info("Result was null");
             }
             log.info("Result: " + result);
-            // TODO Audit results
         }
     }
 }

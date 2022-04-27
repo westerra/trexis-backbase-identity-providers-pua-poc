@@ -19,8 +19,6 @@ public class LoginIngestionAuthenticatorFactory implements AuthenticatorFactory 
 
     /**
      * What requirement settings are allowed.
-     *
-     * @return
      */
     @Override
     public AuthenticationExecutionModel.Requirement[] getRequirementChoices() {
@@ -30,8 +28,6 @@ public class LoginIngestionAuthenticatorFactory implements AuthenticatorFactory 
     /**
      * Determines if the setRequiredActions() will be called. If a user is not configured for an Authenticator, the flow manager checks isUserSetupAllowed(). If it is false, then
      * the flow aborts with an error. However if it returns true, then the flow manager will invoke setRequiredActions().
-     *
-     * @return
      */
     @Override
     public boolean isUserSetupAllowed() {
@@ -40,8 +36,6 @@ public class LoginIngestionAuthenticatorFactory implements AuthenticatorFactory 
 
     /**
      * Flag which specifies to the admin console on whether the Authenticator can be configured within a flow.
-     *
-     * @return
      */
     @Override
     public boolean isConfigurable() {
@@ -50,8 +44,6 @@ public class LoginIngestionAuthenticatorFactory implements AuthenticatorFactory 
 
     /**
      * The tooltip text that will be shown when you are picking the Authenticator.
-     *
-     * @return
      */
     @Override
     public String getHelpText() {
@@ -63,8 +55,6 @@ public class LoginIngestionAuthenticatorFactory implements AuthenticatorFactory 
      * <p>
      * Returns a list of ProviderConfigProperty objects. These objects detail a specific configuration attribute. Each ProviderConfigProperty defines the name of the config
      * property.
-     *
-     * @return
      */
     @Override
     public List<ProviderConfigProperty> getConfigProperties() {
@@ -73,8 +63,6 @@ public class LoginIngestionAuthenticatorFactory implements AuthenticatorFactory 
 
     /**
      * Friendly name for the authenticator.
-     *
-     * @return
      */
     @Override
     public String getDisplayType() {
@@ -83,8 +71,6 @@ public class LoginIngestionAuthenticatorFactory implements AuthenticatorFactory 
 
     /**
      * General authenticator type, i.e. totp, password, cert.
-     *
-     * @return null if not a referencable category.
      */
     @Override
     public String getReferenceCategory() {
@@ -94,8 +80,6 @@ public class LoginIngestionAuthenticatorFactory implements AuthenticatorFactory 
     /**
      * Only called once when the factory is first created. This config is pulled from a number of places including but not limited to the application.yml and environment vars. The
      * param will be scoped to keycloak.<spi-name>.<getId()>
-     *
-     * @param config
      */
     @Override
     public void init(Config.Scope config) {
@@ -103,8 +87,6 @@ public class LoginIngestionAuthenticatorFactory implements AuthenticatorFactory 
 
     /**
      * Called after all provider factories have been initialized.
-     *
-     * @param factory
      */
     @Override
     public void postInit(KeycloakSessionFactory factory) {
@@ -112,8 +94,6 @@ public class LoginIngestionAuthenticatorFactory implements AuthenticatorFactory 
 
     /**
      * This is the name of the provider and will be shown in the admin console as an option.
-     *
-     * @return
      */
     @Override
     public String getId() {
@@ -126,5 +106,4 @@ public class LoginIngestionAuthenticatorFactory implements AuthenticatorFactory 
     @Override
     public void close() {
     }
-
 }

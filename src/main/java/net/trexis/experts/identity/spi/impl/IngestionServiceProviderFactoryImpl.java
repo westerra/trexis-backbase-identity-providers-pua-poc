@@ -1,12 +1,12 @@
 package net.trexis.experts.identity.spi.impl;
 
 import com.google.common.base.Strings;
+import net.trexis.experts.identity.spi.IngestionServiceProvider;
+import net.trexis.experts.identity.spi.IngestionServiceProviderFactory;
 import org.jboss.logging.Logger;
 import org.keycloak.Config;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.KeycloakSessionFactory;
-import net.trexis.experts.identity.spi.IngestionServiceProvider;
-import net.trexis.experts.identity.spi.IngestionServiceProviderFactory;
 
 public class IngestionServiceProviderFactoryImpl implements IngestionServiceProviderFactory {
 
@@ -18,12 +18,16 @@ public class IngestionServiceProviderFactoryImpl implements IngestionServiceProv
     private static final String IDENTITY_INGESTION_SERVICE_BASEPATH = "INGESTION_SERVICE_BASEPATH";
     private static final String INGESTION_SERVICE_INGESTION_PATH = "INGESTION_SERVICE_INGESTION_PATH";
 
+    private static IngestionServiceProperties ingestionServiceProperties;
     private String ingestionServiceHost;
     private String ingestionServiceScheme;
     private int ingestionServicePortValue;
     private String ingestionServiceBasePath;
     private String ingestionServiceUserIngestionPath;
-    private static IngestionServiceProperties ingestionServiceProperties;
+
+    public static IngestionServiceProperties getIngestionServiceProperties() {
+        return ingestionServiceProperties;
+    }
 
     @Override
     public IngestionServiceProvider create(KeycloakSession keycloakSession) {
@@ -74,9 +78,5 @@ public class IngestionServiceProviderFactoryImpl implements IngestionServiceProv
     @Override
     public String getId() {
         return ID;
-    }
-
-    public static IngestionServiceProperties getIngestionServiceProperties() {
-        return ingestionServiceProperties;
     }
 }
