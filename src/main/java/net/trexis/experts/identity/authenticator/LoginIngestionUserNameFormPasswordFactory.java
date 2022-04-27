@@ -1,11 +1,11 @@
 package net.trexis.experts.identity.authenticator;
 
+import java.util.ArrayList;
 import java.util.List;
 import org.keycloak.Config;
 import org.keycloak.authentication.Authenticator;
 import org.keycloak.authentication.AuthenticatorFactory;
 import org.keycloak.authentication.DisplayTypeAuthenticatorFactory;
-import org.keycloak.authentication.authenticators.console.ConsoleUsernamePasswordAuthenticator;
 import org.keycloak.models.AuthenticationExecutionModel;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.KeycloakSessionFactory;
@@ -17,6 +17,10 @@ public class LoginIngestionUserNameFormPasswordFactory implements AuthenticatorF
     public static final LoginIngestionUsernamePasswordForm SINGLETON = new LoginIngestionUsernamePasswordForm();
     public static final AuthenticationExecutionModel.Requirement[] REQUIREMENT_CHOICES;
 
+    static {
+        REQUIREMENT_CHOICES = new AuthenticationExecutionModel.Requirement[]{AuthenticationExecutionModel.Requirement.REQUIRED};
+    }
+
     public LoginIngestionUserNameFormPasswordFactory() {
     }
 
@@ -25,11 +29,7 @@ public class LoginIngestionUserNameFormPasswordFactory implements AuthenticatorF
     }
 
     public Authenticator createDisplay(KeycloakSession session, String displayType) {
-        if (displayType == null) {
-            return SINGLETON;
-        } else {
-            return !"console".equalsIgnoreCase(displayType) ? null : ConsoleUsernamePasswordAuthenticator.SINGLETON;
-        }
+        return displayType == null || "console".equalsIgnoreCase(displayType) ? SINGLETON : null;
     }
 
     public void init(Config.Scope config) {
@@ -66,14 +66,10 @@ public class LoginIngestionUserNameFormPasswordFactory implements AuthenticatorF
     }
 
     public List<ProviderConfigProperty> getConfigProperties() {
-        return null;
+        return new ArrayList<>();
     }
 
     public boolean isUserSetupAllowed() {
         return false;
-    }
-
-    static {
-        REQUIREMENT_CHOICES = new AuthenticationExecutionModel.Requirement[]{AuthenticationExecutionModel.Requirement.REQUIRED};
     }
 }

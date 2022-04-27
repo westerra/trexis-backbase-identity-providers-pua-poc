@@ -12,11 +12,13 @@ public class EvaluateRestrictedAuthenticator implements Authenticator {
 
     protected static ServicesLogger log;
 
+    static {
+        log = ServicesLogger.LOGGER;
+    }
+
     /**
      * Initial call for the authenticator. This method should check the current HTTP request to determine if the request satisfies the Authenticator's requirements. If it doesn't,
      * it should send back a challenge response by calling the AuthenticationFlowContext.challenge(Response).
-     *
-     * @param context
      */
     @Override
     public void authenticate(AuthenticationFlowContext context) {
@@ -29,8 +31,6 @@ public class EvaluateRestrictedAuthenticator implements Authenticator {
 
     /**
      * Called from a form action invocation.
-     *
-     * @param context
      */
     @Override
     public void action(AuthenticationFlowContext context) {
@@ -38,8 +38,6 @@ public class EvaluateRestrictedAuthenticator implements Authenticator {
 
     /**
      * Does this authenticator require that the user has already been identified?
-     *
-     * @return
      */
     @Override
     public boolean requiresUser() {
@@ -48,11 +46,6 @@ public class EvaluateRestrictedAuthenticator implements Authenticator {
 
     /**
      * Is the user configured for this authenticator.
-     *
-     * @param session
-     * @param realm
-     * @param user
-     * @return
      */
     @Override
     public boolean configuredFor(KeycloakSession session, RealmModel realm, UserModel user) {
@@ -72,9 +65,5 @@ public class EvaluateRestrictedAuthenticator implements Authenticator {
      */
     @Override
     public void close() {
-    }
-
-    static {
-        log = ServicesLogger.LOGGER;
     }
 }

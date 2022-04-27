@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 @Data
 @RequiredArgsConstructor
 public class UserLoginDetails {
+
     @SerializedName("ipAddress")
     private String ipAddress;
 
