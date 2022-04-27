@@ -1,8 +1,7 @@
 package net.trexis.experts.identity.spi.impl;
 
-import net.trexis.experts.identity.model.EnrollmentResult;
-import org.jboss.logging.Logger;
-
+import java.net.MalformedURLException;
+import java.net.URI;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.Entity;
@@ -10,14 +9,14 @@ import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
-import java.net.MalformedURLException;
-import java.net.URI;
+import net.trexis.experts.identity.model.EnrollmentResult;
+import org.jboss.logging.Logger;
 
 public class EnrollmentServiceClient {
 
     private static final Logger log = Logger.getLogger(EnrollmentServiceClient.class);
-    private WebTarget target;
-    private EnrollmentServiceProperties properties;
+    private final WebTarget target;
+    private final EnrollmentServiceProperties properties;
 
     public EnrollmentServiceClient(EnrollmentServiceProperties properties) {
         this.properties = properties;
@@ -29,7 +28,7 @@ public class EnrollmentServiceClient {
                 .scheme(properties.getScheme())
                 .build();
         try {
-            log.info("Path to enrollment: "  + uri.toURL().toString());
+            log.info("Path to enrollment: " + uri.toURL());
         } catch (MalformedURLException e) {
             e.printStackTrace();
         }
@@ -49,7 +48,7 @@ public class EnrollmentServiceClient {
             } catch (Exception e) {
                 log.error("There was an error calling enrollment service: " + e.getMessage());
             }
-            if (response == null || response.getStatus()!=200) {
+            if (response == null || response.getStatus() != 200) {
                 log.info("Unexpected response: " + response);
             }
             log.info("Response: " + response.getEntity());
@@ -69,16 +68,16 @@ public class EnrollmentServiceClient {
             } catch (Exception e) {
                 log.error("There was an error calling enrollment service: " + e.getMessage());
             }
-            if (response == null || response.getStatus()!=200) {
+            if (response == null || response.getStatus() != 200) {
                 log.info("Unexpected response: " + response);
                 return true;
             } else {
                 log.info("Response: " + response.getEntity());
-                try{
+                try {
                     EnrollmentResult enrollmentResult = response.readEntity(EnrollmentResult.class);
                     log.info("User limited state: " + enrollmentResult.getLimited());
                     return enrollmentResult.getLimited();
-                } catch (Exception ex){
+                } catch (Exception ex) {
                     log.error("Unable to cast response to enrollment result");
                     log.info(response.readEntity(String.class));
                     return true;

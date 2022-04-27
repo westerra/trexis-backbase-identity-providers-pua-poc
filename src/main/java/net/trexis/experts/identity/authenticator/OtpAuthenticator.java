@@ -38,8 +38,9 @@ import static org.keycloak.authentication.AuthenticationFlowError.INVALID_CREDEN
 public class OtpAuthenticator implements Authenticator {
 
     private static final Logger log = Logger.getLogger(OtpAuthenticator.class);
-    private static final String TEMPLATE = "mfa-otp.ftl";
+    private static final String MFA_OTP_TEMPLATE = "mfa-otp.ftl";
     private static final String MFA_REQUIRED = "mfa_required";
+
     private final KeycloakSession session;
     private final OtpChannelService otpChannelService;
     private final SecretProvider secretProvider;
@@ -102,7 +103,7 @@ public class OtpAuthenticator implements Authenticator {
             log.debugv("User {0} is required to do MFA", context.getUser().getUsername());
             String otpChoiceAddressId = context.getAuthenticationSession().getAuthNote(OTP_CHOICE_ADDRESS_ID);
             verifyOtpMethodAndSendOtp(context, otpChoiceAddressId);
-            var input = context.form().createForm(TEMPLATE);
+            var input = context.form().createForm(MFA_OTP_TEMPLATE);
             context.challenge(input);
         } else {
             log.debugv("User {0} is NOT required to do MFA", context.getUser().getUsername());
@@ -114,7 +115,6 @@ public class OtpAuthenticator implements Authenticator {
         String communicationServiceSecret = secretProvider.getCommunicationServiceSecret(authenticationFlowContext);
         return timeBasedOtp.generateTOTP(communicationServiceSecret);
     }
-
 
     @Override
     public void action(AuthenticationFlowContext context) {
@@ -146,12 +146,12 @@ public class OtpAuthenticator implements Authenticator {
     private void issueFailureChallenge(AuthenticationFlowContext context, String message) {
         Response challenge = context.form()
                 .setError(message)
-                .createForm(TEMPLATE);
+                .createForm(MFA_OTP_TEMPLATE);
         context.failureChallenge(INVALID_CREDENTIALS, challenge);
     }
 
     protected Response challengeWithInfo(AuthenticationFlowContext context, String infoMessage) {
-        return context.form().setInfo(infoMessage).createForm(TEMPLATE);
+        return context.form().setInfo(infoMessage).createForm(MFA_OTP_TEMPLATE);
     }
 
     @Override
@@ -165,7 +165,7 @@ public class OtpAuthenticator implements Authenticator {
     }
 
     private boolean mfaIsRequired(UserModel userModel) {
-        return TRUE.equalsIgnoreCase(userModel.getFirstAttribute(Constants.USER_ATTRIBUTE_MFA_REQUIRED)) ||
+        return TRUE.equalsIgnoreCase(userModel.getFirstAttribute(USER_ATTRIBUTE_MFA_REQUIRED)) ||
                 userModel.getRequiredActions().contains(MFA_REQUIRED);
     }
 

@@ -6,5 +6,6 @@ import org.keycloak.provider.Provider;
 public interface EnrollmentServiceProvider extends Provider {
 
     void callRebaseService(UserModel userModel);
+
     boolean callEvaluateLimitedService(UserModel userModel);
 }

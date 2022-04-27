@@ -12,6 +12,10 @@ public class RebaseAuthenticator implements Authenticator {
 
     protected static ServicesLogger log;
 
+    static {
+        log = ServicesLogger.LOGGER;
+    }
+
     /**
      * Initial call for the authenticator. This method should check the current HTTP request to determine if the request satisfies the Authenticator's requirements. If it doesn't,
      * it should send back a challenge response by calling the AuthenticationFlowContext.challenge(Response).
@@ -72,9 +76,5 @@ public class RebaseAuthenticator implements Authenticator {
      */
     @Override
     public void close() {
-    }
-
-    static {
-        log = ServicesLogger.LOGGER;
     }
 }

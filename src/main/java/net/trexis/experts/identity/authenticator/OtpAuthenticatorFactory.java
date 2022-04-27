@@ -6,6 +6,8 @@ import com.backbase.identity.authenticators.otp.OtpChannelService;
 import com.backbase.identity.authenticators.otp.SecretProvider;
 import com.backbase.identity.util.DefaultCacheSupplier;
 import com.backbase.identity.util.OtpChannelPropertiesConverter;
+import java.util.ArrayList;
+import java.util.List;
 import org.eclipse.microprofile.config.ConfigProvider;
 import org.keycloak.Config;
 import org.keycloak.authentication.Authenticator;
@@ -15,9 +17,6 @@ import org.keycloak.models.AuthenticationExecutionModel.Requirement;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.KeycloakSessionFactory;
 import org.keycloak.provider.ProviderConfigProperty;
-
-import java.util.ArrayList;
-import java.util.List;
 
 public class OtpAuthenticatorFactory implements AuthenticatorFactory, ConfigurableAuthenticatorFactory {
 
@@ -29,6 +28,7 @@ public class OtpAuthenticatorFactory implements AuthenticatorFactory, Configurab
     private static final OtpTemplateProviderImplFactory OTP_TEMPLATE_PROVIDER_IMPL_FACTORY;
     private static final OtpChannelService otpChannelService;
     private static final CommunicationService communicationService;
+    private static final List<ProviderConfigProperty> configProperties = new ArrayList<ProviderConfigProperty>();
 
     static {
         requirements = new Requirement[]{Requirement.REQUIRED, Requirement.DISABLED, Requirement.ALTERNATIVE};
@@ -38,8 +38,6 @@ public class OtpAuthenticatorFactory implements AuthenticatorFactory, Configurab
         otpChannelService = new OtpChannelService(otpAuthenticatorConfiguration);
         communicationService = new CommunicationService(otpAuthenticatorConfiguration.getCommunicationsServiceEndpoint());
     }
-
-    private static final List<ProviderConfigProperty> configProperties = new ArrayList<ProviderConfigProperty>();
 
     static {
         ProviderConfigProperty algorithm, digits, lookAheadWindow, otpPeriod, otpResendPeriod, otpResendLimit;
@@ -135,9 +133,8 @@ public class OtpAuthenticatorFactory implements AuthenticatorFactory, Configurab
     }
 
     /**
-     * Allowed requirement switches. While there are four different requirement types: ALTERNATIVE, REQUIRED, OPTIONAL,
-     * DISABLED, AuthenticatorFactory implementations can limit which requirement options are shown in the admin console
-     * when defining a flow
+     * Allowed requirement switches. While there are four different requirement types: ALTERNATIVE, REQUIRED, OPTIONAL, DISABLED, AuthenticatorFactory implementations can limit
+     * which requirement options are shown in the admin console when defining a flow
      */
     @Override
     public Requirement[] getRequirementChoices() {
@@ -145,10 +142,8 @@ public class OtpAuthenticatorFactory implements AuthenticatorFactory, Configurab
     }
 
     /**
-     * Flag that tells the flow manager whether or not Authenticator.setRequiredActions() method will be called. If an
-     * Authenticator is not configured for a user, the flow manager checks isUserSetupAllowed(). If it is false, then
-     * the flow aborts with an error. If it returns true, then the flow manager will invoke
-     * Authenticator.setRequiredActions().
+     * Flag that tells the flow manager whether or not Authenticator.setRequiredActions() method will be called. If an Authenticator is not configured for a user, the flow manager
+     * checks isUserSetupAllowed(). If it is false, then the flow aborts with an error. If it returns true, then the flow manager will invoke Authenticator.setRequiredActions().
      */
     @Override
     public boolean isUserSetupAllowed() {
@@ -169,10 +164,8 @@ public class OtpAuthenticatorFactory implements AuthenticatorFactory, Configurab
     }
 
     /**
-     * Only called once when the factory is first created.
-     * This config is pulled from a number of places including but not limited to
-     * the application.yml and environment vars.
-     * The param will be scoped to keycloak.<spi-name>.<getId()>
+     * Only called once when the factory is first created. This config is pulled from a number of places including but not limited to the application.yml and environment vars. The
+     * param will be scoped to keycloak.<spi-name>.<getId()>
      *
      * @param config
      */
@@ -201,6 +194,7 @@ public class OtpAuthenticatorFactory implements AuthenticatorFactory, Configurab
 
     /**
      * This is the name of the provider and will be shown in the admin console as an option.
+     *
      * @return
      */
     @Override

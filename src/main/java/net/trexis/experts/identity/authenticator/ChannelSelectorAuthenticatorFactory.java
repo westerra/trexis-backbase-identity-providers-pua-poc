@@ -4,6 +4,7 @@ import com.backbase.identity.authenticators.otp.OtpAuthenticatorConfiguration;
 import com.backbase.identity.authenticators.otp.OtpChannelService;
 import com.backbase.identity.util.OtpChannelPropertiesConverter;
 import java.util.ArrayList;
+import java.util.List;
 import org.eclipse.microprofile.config.ConfigProvider;
 import org.keycloak.Config;
 import org.keycloak.authentication.Authenticator;
@@ -13,8 +14,6 @@ import org.keycloak.models.AuthenticationExecutionModel;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.KeycloakSessionFactory;
 import org.keycloak.provider.ProviderConfigProperty;
-
-import java.util.List;
 
 import static org.keycloak.models.AuthenticationExecutionModel.Requirement.DISABLED;
 import static org.keycloak.models.AuthenticationExecutionModel.Requirement.REQUIRED;

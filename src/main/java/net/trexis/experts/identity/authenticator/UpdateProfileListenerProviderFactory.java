@@ -3,7 +3,6 @@ package net.trexis.experts.identity.authenticator;
 import com.finite.ApiClient;
 import com.finite.api.EntityApi;
 import org.keycloak.Config;
-import org.keycloak.admin.client.Keycloak;
 import org.keycloak.events.EventListenerProvider;
 import org.keycloak.events.EventListenerProviderFactory;
 import org.keycloak.models.KeycloakSession;

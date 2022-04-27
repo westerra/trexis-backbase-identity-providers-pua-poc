@@ -1,4 +1,5 @@
 package net.trexis.experts.identity.model;
+
 public class EnrollmentResult {
 
     private Boolean limited;

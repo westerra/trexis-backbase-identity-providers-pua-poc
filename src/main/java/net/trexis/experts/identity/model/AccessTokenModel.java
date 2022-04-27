@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 @Data
 @RequiredArgsConstructor
 public class AccessTokenModel {
+
     @SerializedName("access_token")
     private String access_token;
     @SerializedName("token_type")

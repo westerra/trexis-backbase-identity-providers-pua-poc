@@ -8,25 +8,20 @@ import org.jboss.logging.Logger;
 import org.keycloak.events.Event;
 import org.keycloak.events.EventListenerProvider;
 import org.keycloak.events.admin.AdminEvent;
-import org.keycloak.events.admin.OperationType;
-import org.keycloak.events.admin.ResourceType;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.RealmModel;
 
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
-import static org.keycloak.events.Details.EMAIL;
 import static org.keycloak.events.Details.PREVIOUS_EMAIL;
 import static org.keycloak.events.Details.UPDATED_EMAIL;
 import static org.keycloak.events.EventType.UPDATE_EMAIL;
-import static org.keycloak.events.admin.OperationType.UPDATE;
-import static org.keycloak.events.admin.ResourceType.USER;
 
 public class UpdateProfileListenerProvider implements EventListenerProvider {
 
     private static final Logger log = Logger.getLogger(UpdateProfileListenerProvider.class);
 
-    private KeycloakSession keycloakSession;
-    private EntityApi entityApi;
+    private final KeycloakSession keycloakSession;
+    private final EntityApi entityApi;
 
     public UpdateProfileListenerProvider(KeycloakSession keycloakSession, EntityApi entityApi) {
         this.entityApi = entityApi;

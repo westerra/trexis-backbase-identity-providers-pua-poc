@@ -29,7 +29,7 @@ public class LoginIngestionUsernamePasswordForm extends UsernamePasswordForm {
                 EnrollmentServiceProvider enrollmentServiceProvider = context.getSession().getProvider(EnrollmentServiceProvider.class);
                 log.info("Enrollment service provider: " + enrollmentServiceProvider);
                 boolean isLimited = enrollmentServiceProvider.callEvaluateLimitedService(user);
-                if(!isLimited){
+                if (!isLimited) {
                     log.info("User successfully logged in: " + user.getUsername() + ", rebase");
                     enrollmentServiceProvider.callRebaseService(user);
 

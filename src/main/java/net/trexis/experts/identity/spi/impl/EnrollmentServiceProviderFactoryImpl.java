@@ -2,7 +2,6 @@ package net.trexis.experts.identity.spi.impl;
 
 import com.google.common.base.Strings;
 import net.trexis.experts.identity.spi.EnrollmentServiceProvider;
-
 import net.trexis.experts.identity.spi.EnrollmentServiceProviderFactory;
 import org.jboss.logging.Logger;
 import org.keycloak.Config;
@@ -19,14 +18,17 @@ public class EnrollmentServiceProviderFactoryImpl implements EnrollmentServicePr
     private static final String IDENTITY_ENROLLMENT_SERVICE_BASEPATH = "ENROLLMENT_SERVICE_BASEPATH";
     private static final String ENROLLMENT_SERVICE_REBASE_PATH = "ENROLLMENT_SERVICE_REBASE_PATH";
     private static final String ENROLLMENT_SERVICE_EVALUATE_LIMITED_PATH = "ENROLLMENT_SERVICE_EVALUATE_LIMITED_PATH";
-
+    private static EnrollmentServiceProperties enrollmentServiceProperties;
     private String enrollmentServiceHost;
     private String enrollmentServiceScheme;
     private int enrollmentServicePortValue;
     private String enrollmentServiceBasePath;
     private String enrollmentServiceRebasePath;
     private String enrollmentServiceEvaluateLimitedPath;
-    private static EnrollmentServiceProperties enrollmentServiceProperties;
+
+    public static EnrollmentServiceProperties getEnrollmentServiceProperties() {
+        return enrollmentServiceProperties;
+    }
 
     @Override
     public EnrollmentServiceProvider create(KeycloakSession keycloakSession) {
@@ -80,9 +82,5 @@ public class EnrollmentServiceProviderFactoryImpl implements EnrollmentServicePr
     @Override
     public String getId() {
         return ID;
-    }
-
-    public static EnrollmentServiceProperties getEnrollmentServiceProperties() {
-        return enrollmentServiceProperties;
     }
 }
