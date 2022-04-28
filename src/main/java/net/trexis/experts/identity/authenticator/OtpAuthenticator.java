@@ -25,7 +25,6 @@ import org.keycloak.models.RealmModel;
 import org.keycloak.models.UserModel;
 import org.keycloak.models.utils.TimeBasedOTP;
 import org.keycloak.provider.ProviderConfigProperty;
-import net.trexis.experts.identity.configuration.Constants;
 import static net.trexis.experts.identity.configuration.Constants.FALSE;
 import static java.lang.Integer.parseInt;
 import static java.time.Duration.between;
@@ -166,11 +165,11 @@ public class OtpAuthenticator implements Authenticator {
     }
 
     private boolean mfaIsRequired(UserModel userModel) {
-        if(FALSE.equalsIgnoreCase(userModel.getFirstAttribute(Constants.USER_ATTRIBUTE_MFA_REQUIRED)) &&
+        if(FALSE.equalsIgnoreCase(userModel.getFirstAttribute(USER_ATTRIBUTE_MFA_REQUIRED)) &&
                 !(userModel.getRequiredActions().contains(MFA_REQUIRED))) {
             return false;
         } else {
-            return TRUE.equalsIgnoreCase(userModel.getFirstAttribute(Constants.USER_ATTRIBUTE_MFA_REQUIRED)) ||
+            return TRUE.equalsIgnoreCase(userModel.getFirstAttribute(USER_ATTRIBUTE_MFA_REQUIRED)) ||
                     userModel.getRequiredActions().contains(MFA_REQUIRED);
         }
     }
