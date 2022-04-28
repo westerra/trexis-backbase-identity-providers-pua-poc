@@ -25,7 +25,7 @@
         </div>
         <div class="test">
                   <span>
-                      ${msg("MFACodeSent")}
+                      ${msg("MFACodeSent")} <#if channelNumber??> ${channelNumber} </#if>
                   </span>
         </div>
         
