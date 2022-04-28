@@ -1,12 +1,13 @@
 package net.trexis.experts.identity.spi.impl;
 
+import net.trexis.experts.identity.spi.IngestionServiceProvider;
 import org.jboss.logging.Logger;
 import org.keycloak.models.UserModel;
-import net.trexis.experts.identity.spi.IngestionServiceProvider;
 
 public class IngestionServiceProviderImpl implements IngestionServiceProvider {
+
     private static final Logger log = Logger.getLogger(IngestionServiceProviderFactoryImpl.class);
-    private IngestionServiceClient client;
+    private final IngestionServiceClient client;
 
     public IngestionServiceProviderImpl() {
         log.info("Creating Ingestion Service Provider");

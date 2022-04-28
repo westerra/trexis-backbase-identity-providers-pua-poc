@@ -3,28 +3,33 @@ package net.trexis.experts.identity.authenticator;
 import net.trexis.experts.identity.spi.EnrollmentServiceProvider;
 import net.trexis.experts.identity.spi.IngestionServiceProvider;
 import org.keycloak.authentication.AuthenticationFlowContext;
-import org.keycloak.authentication.FlowStatus;
 import org.keycloak.authentication.authenticators.browser.UsernamePasswordForm;
-import org.keycloak.models.UserModel;
 import org.keycloak.services.ServicesLogger;
+
+import static org.keycloak.authentication.FlowStatus.SUCCESS;
+import static org.keycloak.services.ServicesLogger.LOGGER;
 
 public class LoginIngestionUsernamePasswordForm extends UsernamePasswordForm {
 
     protected static ServicesLogger log;
 
+    static {
+        log = LOGGER;
+    }
+
     @Override
     public void action(AuthenticationFlowContext context) {
         super.action(context);
-        FlowStatus status = context.getStatus();
-        if (FlowStatus.SUCCESS.equals(status)) {
+
+        if (SUCCESS == context.getStatus()) {
             log.info("Authentication is successful");
-            UserModel user = context.getUser();
+            var user = context.getUser();
             if (user != null) {
                 log.info("User successfully logged in: " + user.getUsername() + ", evaluate limited");
                 EnrollmentServiceProvider enrollmentServiceProvider = context.getSession().getProvider(EnrollmentServiceProvider.class);
                 log.info("Enrollment service provider: " + enrollmentServiceProvider);
                 boolean isLimited = enrollmentServiceProvider.callEvaluateLimitedService(user);
-                if(!isLimited){
+                if (!isLimited) {
                     log.info("User successfully logged in: " + user.getUsername() + ", rebase");
                     enrollmentServiceProvider.callRebaseService(user);
 
@@ -36,9 +41,5 @@ public class LoginIngestionUsernamePasswordForm extends UsernamePasswordForm {
                 context.success();
             }
         }
-    }
-
-    static {
-        log = ServicesLogger.LOGGER;
     }
 }
