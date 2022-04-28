@@ -31,6 +31,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import static net.trexis.experts.identity.configuration.Constants.FALSE;
 import static net.trexis.experts.identity.configuration.Constants.TRUE;
 
 public class OtpAuthenticator implements Authenticator {
@@ -148,8 +149,13 @@ public class OtpAuthenticator implements Authenticator {
     }
 
     private boolean mfaIsRequired(UserModel userModel) {
-        return TRUE.equalsIgnoreCase(userModel.getFirstAttribute(Constants.USER_ATTRIBUTE_MFA_REQUIRED)) ||
-                userModel.getRequiredActions().contains(MFA_REQUIRED);
+        if(FALSE.equalsIgnoreCase(userModel.getFirstAttribute(Constants.USER_ATTRIBUTE_MFA_REQUIRED)) &&
+                !(userModel.getRequiredActions().contains(MFA_REQUIRED))) {
+            return false;
+        } else {
+            return TRUE.equalsIgnoreCase(userModel.getFirstAttribute(Constants.USER_ATTRIBUTE_MFA_REQUIRED)) ||
+                    userModel.getRequiredActions().contains(MFA_REQUIRED);
+        }
     }
 
     @Override

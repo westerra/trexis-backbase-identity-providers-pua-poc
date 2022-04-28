@@ -26,6 +26,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+import static net.trexis.experts.identity.configuration.Constants.FALSE;
 import static net.trexis.experts.identity.configuration.Constants.TRUE;
 
 public class ChannelSelectorAuthenticator implements Authenticator {
@@ -48,7 +49,8 @@ public class ChannelSelectorAuthenticator implements Authenticator {
 
     @Override
     public void authenticate(AuthenticationFlowContext context) {
-        if(!mfaIsRequired(context.getUser())) {
+        if(!mfaIsRequired(context.getUser()) &&
+                !(FALSE.equalsIgnoreCase(context.getUser().getFirstAttribute(Constants.USER_ATTRIBUTE_MFA_REQUIRED))) ){
             AccessTokenModel accessTokenModel = getAccessToken(context);
             if(!mfaIsRequired(context.getUser()) && accessTokenModel!=null) {
                 checkLastValidLogin(context,accessTokenModel);
@@ -231,8 +233,13 @@ public class ChannelSelectorAuthenticator implements Authenticator {
     }
 
     private boolean mfaIsRequired(UserModel userModel) {
-        return TRUE.equalsIgnoreCase(userModel.getFirstAttribute(Constants.USER_ATTRIBUTE_MFA_REQUIRED)) ||
-                userModel.getRequiredActions().contains(MFA_REQUIRED);
+        if(FALSE.equalsIgnoreCase(userModel.getFirstAttribute(Constants.USER_ATTRIBUTE_MFA_REQUIRED)) &&
+                !(userModel.getRequiredActions().contains(MFA_REQUIRED))) {
+            return false;
+        } else {
+            return TRUE.equalsIgnoreCase(userModel.getFirstAttribute(Constants.USER_ATTRIBUTE_MFA_REQUIRED)) ||
+                    userModel.getRequiredActions().contains(MFA_REQUIRED);
+        }
     }
 
     @Override
