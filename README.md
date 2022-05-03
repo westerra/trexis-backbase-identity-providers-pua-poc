@@ -93,4 +93,6 @@ example of relevant configuration in Identity for this event handler:
 ```yaml
 FINITE_HOSTURL: http://localhost:9090
 FINITE_API_CORE_APIKEY: xxx
+MAPPINGS_PRIMARYEMAIL: email
+IDENTITY_FINITE_ENTITY_IDENTIFIER_CLAIM: entityId
 ```

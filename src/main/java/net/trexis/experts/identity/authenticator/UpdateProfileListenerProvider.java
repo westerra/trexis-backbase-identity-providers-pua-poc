@@ -22,33 +22,39 @@ public class UpdateProfileListenerProvider implements EventListenerProvider {
 
     private final KeycloakSession keycloakSession;
     private final EntityApi entityApi;
+    private final String entityIdentifierClaim;
+    private final String primaryEmailName;
 
-    public UpdateProfileListenerProvider(KeycloakSession keycloakSession, EntityApi entityApi) {
+    public UpdateProfileListenerProvider(KeycloakSession keycloakSession, EntityApi entityApi,
+            String entityIdentifierClaim, String primaryEmailName) {
         this.entityApi = entityApi;
         this.keycloakSession = keycloakSession;
-        log.warn("Constructed UpdateProfileListenerProvider");
+        this.entityIdentifierClaim = entityIdentifierClaim;
+        this.primaryEmailName = primaryEmailName;
     }
 
     public void onEvent(Event event) {
         if (UPDATE_EMAIL == event.getType() && isNotBlank(event.getUserId())) {
-            var previousEmail = event.getDetails().get(PREVIOUS_EMAIL);
-            var updatedEmail = event.getDetails().get(UPDATED_EMAIL);
-
-            log.debug("previous email: " + previousEmail);
-            log.debug("updated email: " + updatedEmail);
-
-            RealmModel realm = keycloakSession.realms().getRealm(event.getRealmId());
-            var user = keycloakSession.users().getUserById(event.getUserId(), realm);
-            var entityId = user.getAttributes().get("entityId").stream().findFirst().orElseThrow();
-
-            var contactPoint = new ContactPoint()
-                    .name("Email")
-                    .type(EMAIL)
-                    .value(updatedEmail);
-
-            entityApi.putEntityProfile(entityId, new EntityProfile().addContactPointsItem(contactPoint), "trexis-backbase-identity-providers", null, false, false);
-            log.info("successfully saved email to core");
+            new Thread(() -> persistEmailToCore(event)).start();
         }
+    }
+
+    private void persistEmailToCore(Event event) {
+        var previousEmail = event.getDetails().get(PREVIOUS_EMAIL);
+        var updatedEmail = event.getDetails().get(UPDATED_EMAIL);
+        log.debug("Updating email: " + previousEmail + " -> " + updatedEmail);
+
+        RealmModel realm = keycloakSession.realms().getRealm(event.getRealmId());
+        var user = keycloakSession.users().getUserById(event.getUserId(), realm);
+        var entityId = user.getAttributes().get(entityIdentifierClaim).stream().findFirst().orElseThrow();
+
+        var contactPoint = new ContactPoint()
+                .name(primaryEmailName)
+                .type(EMAIL)
+                .value(updatedEmail);
+
+        entityApi.putEntityProfile(entityId, new EntityProfile().addContactPointsItem(contactPoint), "trexis-backbase-identity-providers", null, false, false);
+        log.info("successfully saved email to core");
     }
 
     public void onEvent(AdminEvent adminEvent, boolean includeRepresentation) {
