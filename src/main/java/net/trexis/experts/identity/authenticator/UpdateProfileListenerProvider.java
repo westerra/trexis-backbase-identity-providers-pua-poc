@@ -35,7 +35,7 @@ public class UpdateProfileListenerProvider implements EventListenerProvider {
 
     public void onEvent(Event event) {
         if (UPDATE_EMAIL == event.getType() && isNotBlank(event.getUserId())) {
-            new Thread(() -> persistEmailToCore(event)).start();
+            persistEmailToCore(event);
         }
     }
 
