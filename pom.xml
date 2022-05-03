@@ -135,8 +135,7 @@
                         </goals>
                         <configuration>
                             <includeGroupIds>net.trexis.experts,com.finite.api</includeGroupIds>
-                            <!--This will exclude finite-openapi which is depended on by utilities-->
-                            <excludeTransitive>true</excludeTransitive>
+                            <excludeTransitive>false</excludeTransitive>
                             <outputDirectory>${project.build.directory}/classes</outputDirectory>
                         </configuration>
                     </execution>
@@ -149,9 +148,29 @@
                         </goals>
                         <configuration>
                             <includeGroupIds>org.keycloak</includeGroupIds>
+                            <excludeTransitive>false</excludeTransitive>
                             <includeArtifactIds>keycloak-admin-client</includeArtifactIds>
                             <outputDirectory>${project.build.directory}/classes</outputDirectory>
                         </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-assembly-plugin</artifactId>
+                <configuration>
+                    <descriptorRefs>
+                        <descriptorRef>jar-with-dependencies</descriptorRef>
+                    </descriptorRefs>
+                    <appendAssemblyId>false</appendAssemblyId>
+                </configuration>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>single</goal>
+                        </goals>
                     </execution>
                 </executions>
             </plugin>
