@@ -29,7 +29,7 @@ public class UpdateProfileListenerProviderFactory implements EventListenerProvid
 
     @Override
     public EventListenerProvider create(KeycloakSession keycloakSession) {
-        return new UpdateProfileListenerProvider(keycloakSession, ENTITY_API, PRIMARY_EMAIL_CONTACT_POINT_NAME, IDENTITY_FINITE_ENTITY_IDENTIFIER_CLAIM);
+        return new UpdateProfileListenerProvider(keycloakSession, ENTITY_API, IDENTITY_FINITE_ENTITY_IDENTIFIER_CLAIM, PRIMARY_EMAIL_CONTACT_POINT_NAME);
     }
 
     @Override

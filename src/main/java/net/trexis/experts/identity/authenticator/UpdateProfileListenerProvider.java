@@ -46,15 +46,17 @@ public class UpdateProfileListenerProvider implements EventListenerProvider {
 
         RealmModel realm = keycloakSession.realms().getRealm(event.getRealmId());
         var user = keycloakSession.users().getUserById(event.getUserId(), realm);
-        var entityId = user.getAttributes().get(entityIdentifierClaim).stream().findFirst().orElseThrow();
+        user.getAttributes().get(entityIdentifierClaim).stream()
+                .findAny()
+                .ifPresent(entityId ->  {
+                    var contactPoint = new ContactPoint()
+                            .name(primaryEmailName)
+                            .type(EMAIL)
+                            .value(updatedEmail);
 
-        var contactPoint = new ContactPoint()
-                .name(primaryEmailName)
-                .type(EMAIL)
-                .value(updatedEmail);
-
-        entityApi.putEntityProfile(entityId, new EntityProfile().addContactPointsItem(contactPoint), "trexis-backbase-identity-providers", null, false, false);
-        log.info("successfully saved email to core");
+                    entityApi.putEntityProfile(entityId, new EntityProfile().addContactPointsItem(contactPoint), "trexis-backbase-identity-providers", null, false, false);
+                    log.info("successfully saved email to core");
+                });
     }
 
     public void onEvent(AdminEvent adminEvent, boolean includeRepresentation) {
