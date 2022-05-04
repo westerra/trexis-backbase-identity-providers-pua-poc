@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import javax.ws.rs.core.Response;
+
 import org.jboss.logging.Logger;
 import org.keycloak.authentication.AuthenticationFlowContext;
 import org.keycloak.authentication.Authenticator;
@@ -64,33 +65,12 @@ public class OtpAuthenticator implements Authenticator {
         this.cacheSupplier = cacheSupplier;
 
         //TODO: Resent limit testing
-        var algorithmDefault = configProperties.stream()
-                .map(ProviderConfigProperty::getName)
-                .filter("trexis.otp.algorithm"::equals)
-                .findFirst().orElseThrow();
-        int digitsDefault = parseInt(configProperties.stream()
-                .map(ProviderConfigProperty::getName)
-                .filter("trexis.otp.digits"::equals)
-                .findFirst().orElseThrow());
-        int lookAheadWindowDefault = parseInt(configProperties.stream()
-                .map(ProviderConfigProperty::getName)
-                .filter("trexis.otp.lookAheadWindow"::equals)
-                .findFirst().orElseThrow());
-        int otpPeriodDefault = parseInt(configProperties.stream()
-                .map(ProviderConfigProperty::getName)
-                .filter("trexis.otp.otpPeriod"::equals)
-                .findFirst()
-                .orElseThrow());
-        int otpResendPeriodDefault = parseInt(configProperties.stream()
-                .map(ProviderConfigProperty::getName)
-                .filter("trexis.otp.otpResendPeriod"::equals)
-                .findFirst()
-                .orElseThrow());
-        int otpResendLimitDefault = parseInt(configProperties.stream()
-                .map(ProviderConfigProperty::getName)
-                .filter("trexis.otp.otpResendLimit"::equals)
-                .findFirst()
-                .orElseThrow());
+        var algorithmDefault = configProperties.stream().filter(p -> p.getName() == "trexis.otp.algorithm").findFirst().orElseThrow().getDefaultValue().toString();
+        int digitsDefault = Integer.valueOf(configProperties.stream().filter(p -> p.getName() == "trexis.otp.digits").findFirst().orElseThrow().getDefaultValue().toString());
+        int lookAheadWindowDefault = Integer.valueOf(configProperties.stream().filter(p -> p.getName() == "trexis.otp.lookAheadWindow").findFirst().orElseThrow().getDefaultValue().toString());
+        int otpPeriodDefault = Integer.valueOf(configProperties.stream().filter(p -> p.getName() == "trexis.otp.otpPeriod").findFirst().orElseThrow().getDefaultValue().toString());
+        int otpResendPeriodDefault = Integer.valueOf(configProperties.stream().filter(p -> p.getName() == "trexis.otp.otpResendPeriod").findFirst().orElseThrow().getDefaultValue().toString());
+        int otpResendLimitDefault = Integer.valueOf(configProperties.stream().filter(p -> p.getName() == "trexis.otp.otpResendLimit").findFirst().orElseThrow().getDefaultValue().toString());
 
         this.totpConfig = new IdentityTotpConfig(algorithmDefault, digitsDefault, lookAheadWindowDefault, otpPeriodDefault, otpResendPeriodDefault, otpResendLimitDefault);
         this.timeBasedOtp = new IdentityTotpUtil().getTimeBasedOtp(totpConfig);
@@ -173,13 +153,8 @@ public class OtpAuthenticator implements Authenticator {
     }
 
     private boolean mfaIsRequired(UserModel userModel) {
-        if(FALSE.equalsIgnoreCase(userModel.getFirstAttribute(USER_ATTRIBUTE_MFA_REQUIRED)) &&
-                !(userModel.getRequiredActions().contains(MFA_REQUIRED))) {
-            return false;
-        } else {
-            return TRUE.equalsIgnoreCase(userModel.getFirstAttribute(USER_ATTRIBUTE_MFA_REQUIRED)) ||
-                    userModel.getRequiredActions().contains(MFA_REQUIRED);
-        }
+        return TRUE.equalsIgnoreCase(userModel.getFirstAttribute(USER_ATTRIBUTE_MFA_REQUIRED)) ||
+                userModel.getRequiredActions().contains(MFA_REQUIRED);
     }
 
     @Override
@@ -260,6 +235,7 @@ public class OtpAuthenticator implements Authenticator {
                     Optional<OtpChoice> selectedOtpChoiceOptional = findMatchingOtpChoice(context, otpMethod);
                     String secret = secretProvider.getCommunicationServiceSecret(context);
                     if (timeBasedOtp.validateTOTP(otp, secret.getBytes())) {
+                        context.getUser().setSingleAttribute(USER_ATTRIBUTE_MFA_REQUIRED,FALSE);
                         context.success();
                     } else {
                         issueFailureChallenge(context, "Invalid OTP.", maskChannelNumber(selectedOtpChoiceOptional.get().getAddress()));
