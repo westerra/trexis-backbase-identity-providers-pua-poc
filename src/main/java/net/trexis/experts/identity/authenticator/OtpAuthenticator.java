@@ -25,7 +25,7 @@ import org.keycloak.models.RealmModel;
 import org.keycloak.models.UserModel;
 import org.keycloak.models.utils.TimeBasedOTP;
 import org.keycloak.provider.ProviderConfigProperty;
-
+import static net.trexis.experts.identity.configuration.Constants.FALSE;
 import static java.lang.Integer.parseInt;
 import static java.time.Duration.between;
 import static java.time.ZonedDateTime.now;
@@ -103,12 +103,19 @@ public class OtpAuthenticator implements Authenticator {
             log.debugv("User {0} is required to do MFA", context.getUser().getUsername());
             String otpChoiceAddressId = context.getAuthenticationSession().getAuthNote(OTP_CHOICE_ADDRESS_ID);
             verifyOtpMethodAndSendOtp(context, otpChoiceAddressId);
-            var input = context.form().createForm(MFA_OTP_TEMPLATE);
+            Optional<OtpChoice> selectedOtpChoiceOptional = findMatchingOtpChoice(context, otpChoiceAddressId);
+            String channelNumber = selectedOtpChoiceOptional.get().getAddress();
+            var input = context.form().setAttribute("channelNumber", maskChannelNumber(channelNumber)).createForm(MFA_OTP_TEMPLATE);
             context.challenge(input);
         } else {
             log.debugv("User {0} is NOT required to do MFA", context.getUser().getUsername());
             context.success();
         }
+    }
+
+    private String maskChannelNumber(String channelNumber) {
+        var length = channelNumber.length();
+        return channelNumber.substring(0, length - 4).replaceAll("[0-9]", "*")+channelNumber.substring(length - 4,length);
     }
 
     private String generateOtp(AuthenticationFlowContext authenticationFlowContext) {
@@ -121,6 +128,7 @@ public class OtpAuthenticator implements Authenticator {
         var formData = context.getHttpRequest().getDecodedFormParameters();
         String choiceAddressId = context.getAuthenticationSession()
                 .getAuthNote(OTP_CHOICE_ADDRESS_ID);
+        Optional<OtpChoice> selectedOtpChoiceOptional = findMatchingOtpChoice(context, choiceAddressId);
 
         if (formData.containsKey("cancel")) {
             log.info("form data included cancel, resetFlow called.");
@@ -130,28 +138,28 @@ public class OtpAuthenticator implements Authenticator {
 
         if (formData.containsKey("resend")) {
             verifyOtpMethodAndSendOtp(context, choiceAddressId);
-            Response challenge = challengeWithInfo(context, "OTP resent.");
+            Response challenge = challengeWithInfo(context, "OTP resent.",maskChannelNumber(selectedOtpChoiceOptional.get().getAddress()));
             context.challenge(challenge);
             return;
         }
 
         if (!formData.containsKey("totp") || formData.getFirst("totp") == null) {
-            issueFailureChallenge(context, "OTP value is missing.");
+            issueFailureChallenge(context, "OTP value is missing.", maskChannelNumber(selectedOtpChoiceOptional.get().getAddress()));
         }
 
         String userInput = formData.getFirst("totp");
         verifyOtp(context, choiceAddressId, userInput);
     }
 
-    private void issueFailureChallenge(AuthenticationFlowContext context, String message) {
-        Response challenge = context.form()
+    private void issueFailureChallenge(AuthenticationFlowContext context, String message, String channelNumber) {
+        Response challenge = context.form().setAttribute("channelNumber",channelNumber )
                 .setError(message)
                 .createForm(MFA_OTP_TEMPLATE);
         context.failureChallenge(INVALID_CREDENTIALS, challenge);
     }
 
-    protected Response challengeWithInfo(AuthenticationFlowContext context, String infoMessage) {
-        return context.form().setInfo(infoMessage).createForm(MFA_OTP_TEMPLATE);
+    protected Response challengeWithInfo(AuthenticationFlowContext context, String infoMessage, String channelNumber) {
+        return context.form().setAttribute("channelNumber",channelNumber).setInfo(infoMessage).createForm(MFA_OTP_TEMPLATE);
     }
 
     @Override
@@ -165,8 +173,13 @@ public class OtpAuthenticator implements Authenticator {
     }
 
     private boolean mfaIsRequired(UserModel userModel) {
-        return TRUE.equalsIgnoreCase(userModel.getFirstAttribute(USER_ATTRIBUTE_MFA_REQUIRED)) ||
-                userModel.getRequiredActions().contains(MFA_REQUIRED);
+        if(FALSE.equalsIgnoreCase(userModel.getFirstAttribute(USER_ATTRIBUTE_MFA_REQUIRED)) &&
+                !(userModel.getRequiredActions().contains(MFA_REQUIRED))) {
+            return false;
+        } else {
+            return TRUE.equalsIgnoreCase(userModel.getFirstAttribute(USER_ATTRIBUTE_MFA_REQUIRED)) ||
+                    userModel.getRequiredActions().contains(MFA_REQUIRED);
+        }
     }
 
     @Override
@@ -203,7 +216,7 @@ public class OtpAuthenticator implements Authenticator {
         findMatchingOtpChoice(context, otpChoiceAddressId)
                 .ifPresentOrElse(present -> {
                     long timeUntilResendAllowed = getTimeNextResendAllowed(context);
-
+                    Optional<OtpChoice> selectedOtpChoiceOptional = findMatchingOtpChoice(context, otpChoiceAddressId);
                     if (timeUntilResendAllowed == 0L) {
                         String otp = generateOtp(context);
                         cacheOtpSendingRequest(context, otp);
@@ -214,9 +227,9 @@ public class OtpAuthenticator implements Authenticator {
                     } else {
                         log.infov("OTP sending not allowed, {0} seconds remaining from {1} second configured period",
                                 timeUntilResendAllowed, totpConfig.getOtpResendPeriod());
-                        issueFailureChallenge(context, "OTP sending not allowed, resume after " + timeUntilResendAllowed);
+                        issueFailureChallenge(context, "OTP sending not allowed, resume after " + timeUntilResendAllowed, maskChannelNumber(selectedOtpChoiceOptional.get().getAddress()));
                     }
-                }, () -> issueFailureChallenge(context, "Error sending OTP."));
+                }, () -> issueFailureChallenge(context, "Error sending OTP.",""));
     }
 
     private boolean sendOtp(String otp, OtpChoice otpChoice, AuthenticationFlowContext authenticationFlowContext) {
@@ -244,13 +257,14 @@ public class OtpAuthenticator implements Authenticator {
     private void verifyOtp(AuthenticationFlowContext context, String otpMethod, String otp) {
         findMatchingOtpChoice(context, otpMethod)
                 .ifPresentOrElse(present -> {
+                    Optional<OtpChoice> selectedOtpChoiceOptional = findMatchingOtpChoice(context, otpMethod);
                     String secret = secretProvider.getCommunicationServiceSecret(context);
                     if (timeBasedOtp.validateTOTP(otp, secret.getBytes())) {
                         context.success();
                     } else {
-                        issueFailureChallenge(context, "Invalid OTP.");
+                        issueFailureChallenge(context, "Invalid OTP.", maskChannelNumber(selectedOtpChoiceOptional.get().getAddress()));
                     }
-                }, () -> issueFailureChallenge(context, "Unknown device."));
+                }, () -> issueFailureChallenge(context, "Unknown device.",""));
     }
 
     private Optional<OtpChoice> findMatchingOtpChoice(AuthenticationFlowContext authenticationFlowContext, String otpChoiceAddressId) {
