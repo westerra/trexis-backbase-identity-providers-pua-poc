@@ -26,7 +26,7 @@ import org.keycloak.authentication.Authenticator;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.RealmModel;
 import org.keycloak.models.UserModel;
-
+import static net.trexis.experts.identity.configuration.Constants.FALSE;
 import static net.trexis.experts.identity.configuration.Constants.OTP_CHOICE_ADDRESS_ID;
 import static net.trexis.experts.identity.configuration.Constants.TRUE;
 import static org.keycloak.authentication.AuthenticationFlowError.INVALID_CREDENTIALS;
@@ -52,15 +52,17 @@ public class ChannelSelectorAuthenticator implements Authenticator {
 
     @Override
     public void authenticate(AuthenticationFlowContext context) {
-        if (!mfaIsRequired(context.getUser())) {
-            AccessTokenModel accessTokenModel = getAccessToken(context);
-            if (!mfaIsRequired(context.getUser()) && accessTokenModel != null) {
-                checkLastValidLogin(context, accessTokenModel);
-            } else {
-                context.getUser().addRequiredAction(MFA_REQUIRED);
+        if(!mfaIsRequired(context.getUser()) &&
+                !(FALSE.equalsIgnoreCase(context.getUser().getFirstAttribute(Constants.USER_ATTRIBUTE_MFA_REQUIRED))) ) {
+            if (!mfaIsRequired(context.getUser())) {
+                AccessTokenModel accessTokenModel = getAccessToken(context);
+                if (!mfaIsRequired(context.getUser()) && accessTokenModel != null) {
+                    checkLastValidLogin(context, accessTokenModel);
+                } else {
+                    context.getUser().addRequiredAction(MFA_REQUIRED);
+                }
             }
         }
-
         if (mfaIsRequired(context.getUser())) {
             resetUsersChoices(context);
             Response challenge;
@@ -264,8 +266,13 @@ public class ChannelSelectorAuthenticator implements Authenticator {
     }
 
     private boolean mfaIsRequired(UserModel userModel) {
-        return TRUE.equalsIgnoreCase(userModel.getFirstAttribute(Constants.USER_ATTRIBUTE_MFA_REQUIRED)) ||
-                userModel.getRequiredActions().contains(MFA_REQUIRED);
+        if(FALSE.equalsIgnoreCase(userModel.getFirstAttribute(Constants.USER_ATTRIBUTE_MFA_REQUIRED)) &&
+                !(userModel.getRequiredActions().contains(MFA_REQUIRED))) {
+            return false;
+        } else {
+            return TRUE.equalsIgnoreCase(userModel.getFirstAttribute(Constants.USER_ATTRIBUTE_MFA_REQUIRED)) ||
+                    userModel.getRequiredActions().contains(MFA_REQUIRED);
+        }
     }
 
     @Override
