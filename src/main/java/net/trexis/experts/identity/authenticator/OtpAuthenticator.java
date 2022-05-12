@@ -78,12 +78,6 @@ public class OtpAuthenticator implements Authenticator {
     @Override
     public void authenticate(AuthenticationFlowContext context) {
 
-        if(MfaAttributeEnum.ALWAYS_FALSE.getValue().equalsIgnoreCase(context.getUser().getFirstAttribute(Constants.USER_ATTRIBUTE_MFA_REQUIRED))) {
-            log.info("MfaRequired flag is set to : alwaysFalse , Hence NOT required to do MFA");
-            context.success();
-            return;
-        }
-
         if (mfaIsRequired(context.getUser())) {
             configureTotp(context);
             log.debugv("User {0} is required to do MFA", context.getUser().getUsername());
@@ -162,7 +156,8 @@ public class OtpAuthenticator implements Authenticator {
         if(MfaAttributeEnum.TRUE.getValue().equalsIgnoreCase(userModel.getFirstAttribute(Constants.USER_ATTRIBUTE_MFA_REQUIRED)) ||
                 MfaAttributeEnum.ALWAYS_TRUE.getValue().equalsIgnoreCase(userModel.getFirstAttribute(Constants.USER_ATTRIBUTE_MFA_REQUIRED))) {
             return true;
-        } else if (MfaAttributeEnum.FALSE.getValue().equalsIgnoreCase(userModel.getFirstAttribute(Constants.USER_ATTRIBUTE_MFA_REQUIRED))) {
+        } else if (MfaAttributeEnum.FALSE.getValue().equalsIgnoreCase(userModel.getFirstAttribute(Constants.USER_ATTRIBUTE_MFA_REQUIRED)) ||
+                        MfaAttributeEnum.ALWAYS_FALSE.getValue().equalsIgnoreCase(userModel.getFirstAttribute(Constants.USER_ATTRIBUTE_MFA_REQUIRED))) {
             return false;
         } else {
             return true;
