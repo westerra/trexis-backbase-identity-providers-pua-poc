@@ -18,6 +18,8 @@ import java.util.Map;
 import java.util.Optional;
 import javax.ws.rs.core.Response;
 
+import net.trexis.experts.identity.configuration.Constants;
+import net.trexis.experts.identity.model.MfaAttributeEnum;
 import org.jboss.logging.Logger;
 import org.keycloak.authentication.AuthenticationFlowContext;
 import org.keycloak.authentication.Authenticator;
@@ -26,21 +28,18 @@ import org.keycloak.models.RealmModel;
 import org.keycloak.models.UserModel;
 import org.keycloak.models.utils.TimeBasedOTP;
 import org.keycloak.provider.ProviderConfigProperty;
-import static net.trexis.experts.identity.configuration.Constants.FALSE;
+
 import static java.lang.Integer.parseInt;
 import static java.time.Duration.between;
 import static java.time.ZonedDateTime.now;
 import static java.util.Map.Entry.comparingByKey;
-import static net.trexis.experts.identity.configuration.Constants.OTP_CHOICE_ADDRESS_ID;
-import static net.trexis.experts.identity.configuration.Constants.TRUE;
-import static net.trexis.experts.identity.configuration.Constants.USER_ATTRIBUTE_MFA_REQUIRED;
+import static net.trexis.experts.identity.configuration.Constants.*;
 import static org.keycloak.authentication.AuthenticationFlowError.INVALID_CREDENTIALS;
 
 public class OtpAuthenticator implements Authenticator {
 
     private static final Logger log = Logger.getLogger(OtpAuthenticator.class);
     private static final String MFA_OTP_TEMPLATE = "mfa-otp.ftl";
-    private static final String MFA_REQUIRED = "mfa_required";
 
     private final KeycloakSession session;
     private final OtpChannelService otpChannelService;
@@ -78,6 +77,13 @@ public class OtpAuthenticator implements Authenticator {
 
     @Override
     public void authenticate(AuthenticationFlowContext context) {
+
+        if(MfaAttributeEnum.ALWAYS_FALSE.getValue().equalsIgnoreCase(context.getUser().getFirstAttribute(Constants.USER_ATTRIBUTE_MFA_REQUIRED))) {
+            log.info("MfaRequired flag is set to : alwaysFalse , Hence NOT required to do MFA");
+            context.success();
+            return;
+        }
+
         if (mfaIsRequired(context.getUser())) {
             configureTotp(context);
             log.debugv("User {0} is required to do MFA", context.getUser().getUsername());
@@ -153,8 +159,14 @@ public class OtpAuthenticator implements Authenticator {
     }
 
     private boolean mfaIsRequired(UserModel userModel) {
-        return TRUE.equalsIgnoreCase(userModel.getFirstAttribute(USER_ATTRIBUTE_MFA_REQUIRED)) ||
-                userModel.getRequiredActions().contains(MFA_REQUIRED);
+        if(MfaAttributeEnum.TRUE.getValue().equalsIgnoreCase(userModel.getFirstAttribute(Constants.USER_ATTRIBUTE_MFA_REQUIRED)) ||
+                MfaAttributeEnum.ALWAYS_TRUE.getValue().equalsIgnoreCase(userModel.getFirstAttribute(Constants.USER_ATTRIBUTE_MFA_REQUIRED))) {
+            return true;
+        } else if (MfaAttributeEnum.FALSE.getValue().equalsIgnoreCase(userModel.getFirstAttribute(Constants.USER_ATTRIBUTE_MFA_REQUIRED))) {
+            return false;
+        } else {
+            return true;
+        }
     }
 
     @Override
@@ -235,7 +247,11 @@ public class OtpAuthenticator implements Authenticator {
                     Optional<OtpChoice> selectedOtpChoiceOptional = findMatchingOtpChoice(context, otpMethod);
                     String secret = secretProvider.getCommunicationServiceSecret(context);
                     if (timeBasedOtp.validateTOTP(otp, secret.getBytes())) {
-                        context.getUser().setSingleAttribute(USER_ATTRIBUTE_MFA_REQUIRED,FALSE);
+                        if(! (MfaAttributeEnum.ALWAYS_FALSE.getValue().equalsIgnoreCase(context.getUser().getFirstAttribute(Constants.USER_ATTRIBUTE_MFA_REQUIRED)) ||
+                                MfaAttributeEnum.ALWAYS_TRUE.getValue().equalsIgnoreCase(context.getUser().getFirstAttribute(Constants.USER_ATTRIBUTE_MFA_REQUIRED)) ||
+                                MfaAttributeEnum.FALSE.getValue().equalsIgnoreCase(context.getUser().getFirstAttribute(Constants.USER_ATTRIBUTE_MFA_REQUIRED)) )) {
+                            context.getUser().setSingleAttribute(USER_ATTRIBUTE_MFA_REQUIRED,MfaAttributeEnum.FALSE.getValue());
+                        }
                         context.success();
                     } else {
                         issueFailureChallenge(context, "Invalid OTP.", maskChannelNumber(selectedOtpChoiceOptional.get().getAddress()));
