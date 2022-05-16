@@ -13,6 +13,7 @@ import java.util.stream.Collectors;
 import javax.ws.rs.core.Response;
 import net.trexis.experts.identity.configuration.Constants;
 import net.trexis.experts.identity.model.AccessTokenModel;
+import net.trexis.experts.identity.model.MfaAttributeEnum;
 import net.trexis.experts.identity.model.OtpChoiceRepresentation;
 import net.trexis.experts.identity.model.UserLoginDetails;
 import net.trexis.experts.identity.util.ChannelSelectorUtil;
@@ -26,14 +27,12 @@ import org.keycloak.authentication.Authenticator;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.RealmModel;
 import org.keycloak.models.UserModel;
-import static net.trexis.experts.identity.configuration.Constants.OTP_CHOICE_ADDRESS_ID;
-import static net.trexis.experts.identity.configuration.Constants.TRUE;
+import static net.trexis.experts.identity.configuration.Constants.*;
 import static org.keycloak.authentication.AuthenticationFlowError.INVALID_CREDENTIALS;
 
 public class ChannelSelectorAuthenticator implements Authenticator {
 
     protected static final String MFA_CHOICE_TEMPLATE = "mfa-devices.ftl";
-    private static final String MFA_REQUIRED = "mfa_required";
     private static final String GET_ACCESS_TOKEN_BASE_URL = "GET_ACCESS_TOKEN_BASE_URL";
     private static final String GET_USER_EVENTS_BASE_URL = "GET_USER_EVENTS_BASE_URL";
     private static final String CLIENT_ID = "CLIENT_ID";
@@ -51,6 +50,13 @@ public class ChannelSelectorAuthenticator implements Authenticator {
 
     @Override
     public void authenticate(AuthenticationFlowContext context) {
+
+        if(MfaAttributeEnum.ALWAYS_FALSE.getValue().equalsIgnoreCase(context.getUser().getFirstAttribute(Constants.USER_ATTRIBUTE_MFA_REQUIRED))) {
+            log.info("MfaRequired flag is set to : alwaysFalse , Hence NOT required to do MFA");
+            context.success();
+            return;
+        }
+
         if(!mfaIsRequired(context.getUser())) {
             AccessTokenModel accessTokenModel = getAccessToken(context);
             if (!mfaIsRequired(context.getUser()) && accessTokenModel != null) {
@@ -143,24 +149,31 @@ public class ChannelSelectorAuthenticator implements Authenticator {
                 log.debug("convertedObjectForUserLoginDetails :" + convertedObjectForUserLoginDetails);
                 UserLoginDetails[] userLoginDetails = new Gson().fromJson(convertedObjectForUserLoginDetails, UserLoginDetails[].class);
                 if (userLoginDetails != null && userLoginDetails.length > 0) {
-                    String lastLoginIpAddress = userLoginDetails[0].getIpAddress();
-                    if (lastLoginIpAddress.equals(currentLoginIpAddress)) {
-                        log.info("Same IpAddress Found,DO NOT Setting MFA for User");
-                    } else {
+                    boolean isLoginValid = false;
+                    //checking for last 4 ip address
+                    var lastLoginCheckMaxIndex = userLoginDetails.length >= 4 ? 3 : userLoginDetails.length - 1;
+                    for (int i = 0; i <= lastLoginCheckMaxIndex; i++) {
+                        if (userLoginDetails[i].getIpAddress().equals(currentLoginIpAddress)) {
+                            isLoginValid = true;
+                            log.info("Same IpAddress Found From Last 4 Logins , Hence NOT required to do MFA");
+                            break;
+                        }
+                    }
+                    if (!isLoginValid) {
                         log.info("New IpAddress Found, Setting MFA for User");
-                        context.getUser().setSingleAttribute(Constants.USER_ATTRIBUTE_MFA_REQUIRED,TRUE);
+                        context.getUser().setSingleAttribute(Constants.USER_ATTRIBUTE_MFA_REQUIRED, MfaAttributeEnum.TRUE.getValue());
                     }
                 } else {
                     log.info("User Login Details Not Found, Setting MFA for User");
-                    context.getUser().setSingleAttribute(Constants.USER_ATTRIBUTE_MFA_REQUIRED,TRUE);
+                    context.getUser().setSingleAttribute(Constants.USER_ATTRIBUTE_MFA_REQUIRED, MfaAttributeEnum.TRUE.getValue());
                 }
             } else {
                 log.info("Setting MFA for User,Due to unexpected getUserEventsRequestResponse : " + getUserEventsRequestResponse);
-                context.getUser().setSingleAttribute(Constants.USER_ATTRIBUTE_MFA_REQUIRED,TRUE);
+                context.getUser().setSingleAttribute(Constants.USER_ATTRIBUTE_MFA_REQUIRED, MfaAttributeEnum.TRUE.getValue());
             }
         } catch (IOException e) {
             e.printStackTrace();
-            context.getUser().setSingleAttribute(Constants.USER_ATTRIBUTE_MFA_REQUIRED,TRUE);
+            context.getUser().setSingleAttribute(Constants.USER_ATTRIBUTE_MFA_REQUIRED, MfaAttributeEnum.TRUE.getValue());
         }
     }
 
@@ -190,15 +203,15 @@ public class ChannelSelectorAuthenticator implements Authenticator {
                     log.debug("accessTokenModel" + accessTokenModel);
                 } else {
                     log.info("Access Token Not Found, Setting MFA for User");
-                    context.getUser().setSingleAttribute(Constants.USER_ATTRIBUTE_MFA_REQUIRED,TRUE);
+                    context.getUser().setSingleAttribute(Constants.USER_ATTRIBUTE_MFA_REQUIRED,MfaAttributeEnum.TRUE.getValue());
                 }
             } else {
                 log.info("Setting MFA for User,Due to unexpected getAccessTokenResponse : " + getAccessTokenResponse);
-                context.getUser().setSingleAttribute(Constants.USER_ATTRIBUTE_MFA_REQUIRED,TRUE);
+                context.getUser().setSingleAttribute(Constants.USER_ATTRIBUTE_MFA_REQUIRED,MfaAttributeEnum.TRUE.getValue());
             }
         } catch (IOException e) {
             e.printStackTrace();
-            context.getUser().setSingleAttribute(Constants.USER_ATTRIBUTE_MFA_REQUIRED,TRUE);
+            context.getUser().setSingleAttribute(Constants.USER_ATTRIBUTE_MFA_REQUIRED,MfaAttributeEnum.TRUE.getValue());
         }
         return accessTokenModel;
     }
@@ -262,8 +275,16 @@ public class ChannelSelectorAuthenticator implements Authenticator {
     }
 
     private boolean mfaIsRequired(UserModel userModel) {
-            return TRUE.equalsIgnoreCase(userModel.getFirstAttribute(Constants.USER_ATTRIBUTE_MFA_REQUIRED)) ||
-                    userModel.getRequiredActions().contains(MFA_REQUIRED);
+        if(MfaAttributeEnum.TRUE.getValue().equalsIgnoreCase(userModel.getFirstAttribute(Constants.USER_ATTRIBUTE_MFA_REQUIRED)) ||
+                MfaAttributeEnum.ALWAYS_TRUE.getValue().equalsIgnoreCase(userModel.getFirstAttribute(Constants.USER_ATTRIBUTE_MFA_REQUIRED))) {
+            return true;
+        } else if (MfaAttributeEnum.FALSE.getValue().equalsIgnoreCase(userModel.getFirstAttribute(Constants.USER_ATTRIBUTE_MFA_REQUIRED))) {
+            return false;
+        } else {
+            // For any other value (Except : true,false,alwaysTrue,alwaysFalse) we set it to default value : true
+            userModel.setSingleAttribute(Constants.USER_ATTRIBUTE_MFA_REQUIRED, MfaAttributeEnum.TRUE.getValue());
+            return true;
+        }
     }
 
     @Override
