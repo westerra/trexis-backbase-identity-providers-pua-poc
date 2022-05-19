@@ -60,7 +60,7 @@ public class OtpAuthenticatorFactory implements AuthenticatorFactory, Configurab
         digits.setLabel("Digits");
         digits.setType(STRING_TYPE);
         digits.setHelpText("Digits");
-        digits.setDefaultValue(5);
+        digits.setDefaultValue(8);
         configProperties.add(digits);
 
         lookAheadWindow = new ProviderConfigProperty();
@@ -76,7 +76,7 @@ public class OtpAuthenticatorFactory implements AuthenticatorFactory, Configurab
         otpPeriod.setLabel("OTP Period");
         otpPeriod.setType(STRING_TYPE);
         otpPeriod.setHelpText("OTP Period");
-        otpPeriod.setDefaultValue(30);
+        otpPeriod.setDefaultValue(60);
         configProperties.add(otpPeriod);
 
         otpResendPeriod = new ProviderConfigProperty();
