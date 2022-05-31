@@ -78,7 +78,7 @@ public class OtpAuthenticatorFactory implements AuthenticatorFactory, Configurab
         otpPeriod.setLabel("OTP Period");
         otpPeriod.setType(STRING_TYPE);
         otpPeriod.setHelpText("OTP Period");
-        digits.setDefaultValue(System.getenv(OTP_PERIOD));
+        otpPeriod.setDefaultValue(System.getenv(OTP_PERIOD));
         configProperties.add(otpPeriod);
 
         otpResendPeriod = new ProviderConfigProperty();
