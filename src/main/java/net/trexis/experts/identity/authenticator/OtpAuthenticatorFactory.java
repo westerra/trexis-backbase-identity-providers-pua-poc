@@ -26,6 +26,8 @@ import static org.keycloak.provider.ProviderConfigProperty.STRING_TYPE;
 public class OtpAuthenticatorFactory implements AuthenticatorFactory, ConfigurableAuthenticatorFactory {
 
     private static final String PROVIDER_ID = "otp-authenticator";
+    private static final String OTP_DIGIT = "OTP_DIGIT";
+    private static final String OTP_PERIOD = "OTP_PERIOD";
 
     private static final Requirement[] requirements;
     private static final OtpAuthenticatorConfiguration otpAuthenticatorConfiguration;
@@ -60,7 +62,7 @@ public class OtpAuthenticatorFactory implements AuthenticatorFactory, Configurab
         digits.setLabel("Digits");
         digits.setType(STRING_TYPE);
         digits.setHelpText("Digits");
-        digits.setDefaultValue(8);
+        digits.setDefaultValue(System.getenv(OTP_DIGIT));
         configProperties.add(digits);
 
         lookAheadWindow = new ProviderConfigProperty();
@@ -76,7 +78,7 @@ public class OtpAuthenticatorFactory implements AuthenticatorFactory, Configurab
         otpPeriod.setLabel("OTP Period");
         otpPeriod.setType(STRING_TYPE);
         otpPeriod.setHelpText("OTP Period");
-        otpPeriod.setDefaultValue(60);
+        digits.setDefaultValue(System.getenv(OTP_PERIOD));
         configProperties.add(otpPeriod);
 
         otpResendPeriod = new ProviderConfigProperty();
