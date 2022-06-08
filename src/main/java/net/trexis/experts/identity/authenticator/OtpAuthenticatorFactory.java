@@ -8,6 +8,7 @@ import com.backbase.identity.util.DefaultCacheSupplier;
 import com.backbase.identity.util.OtpChannelPropertiesConverter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import org.eclipse.microprofile.config.ConfigProvider;
 import org.keycloak.Config;
 import org.keycloak.authentication.Authenticator;
@@ -48,6 +49,7 @@ public class OtpAuthenticatorFactory implements AuthenticatorFactory, Configurab
 
     static {
         ProviderConfigProperty algorithm, digits, lookAheadWindow, otpPeriod, otpResendPeriod, otpResendLimit;
+        Map<String,String> systemEnv = System.getenv();
 
         algorithm = new ProviderConfigProperty();
         algorithm.setName("trexis.otp.algorithm");
@@ -62,7 +64,7 @@ public class OtpAuthenticatorFactory implements AuthenticatorFactory, Configurab
         digits.setLabel("Digits");
         digits.setType(STRING_TYPE);
         digits.setHelpText("Digits");
-        digits.setDefaultValue(System.getenv(OTP_DIGIT));
+        digits.setDefaultValue(systemEnv.containsKey(OTP_DIGIT)?systemEnv.get(OTP_DIGIT):8);
         configProperties.add(digits);
 
         lookAheadWindow = new ProviderConfigProperty();
@@ -78,7 +80,7 @@ public class OtpAuthenticatorFactory implements AuthenticatorFactory, Configurab
         otpPeriod.setLabel("OTP Period");
         otpPeriod.setType(STRING_TYPE);
         otpPeriod.setHelpText("OTP Period");
-        otpPeriod.setDefaultValue(System.getenv(OTP_PERIOD));
+        otpPeriod.setDefaultValue(systemEnv.containsKey(OTP_PERIOD)?systemEnv.get(OTP_PERIOD):60);
         configProperties.add(otpPeriod);
 
         otpResendPeriod = new ProviderConfigProperty();
