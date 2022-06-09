@@ -80,6 +80,8 @@ USERNAME: admin
 PASSWORD: admin
 GRANT_TYPE: password
 LAST_LOGIN_DAYS: 5
+OTP_DIGIT: 8
+OTP_PERIOD : 60
 ```
 
 ## Keycloak Event Handlers
