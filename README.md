@@ -82,6 +82,11 @@ GRANT_TYPE: password
 LAST_LOGIN_DAYS: 5
 OTP_DIGIT: 8
 OTP_PERIOD : 60
+MESSAGE: "If you did not make this change, Please contact us immediately on 303-321-4209"
+EMAIL_SUBJECT: "Alert: Contact detail updated!"
+TEMPLATE: "sendContactUpdateEmail.ftl"
+EMAIL_FOOTER: "&copy;2022 Westerra Credit Union. All rights reserved.<br>Westerra Credit Union<br>3700 E Alameda Ave<br>Denver, CO 80209"
+UPDATE_PASSWORD_EMAIL: "true"
 ```
 
 ## Keycloak Event Handlers
