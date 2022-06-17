@@ -1,1 +1,2 @@
 net.trexis.experts.identity.authenticator.UpdateProfileListenerProviderFactory
+net.trexis.experts.identity.authenticator.UpdatePasswordAdminEventListenerProviderFactory
