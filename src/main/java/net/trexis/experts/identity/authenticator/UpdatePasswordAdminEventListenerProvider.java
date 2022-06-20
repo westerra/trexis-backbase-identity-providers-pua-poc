@@ -47,16 +47,9 @@ public class UpdatePasswordAdminEventListenerProvider implements EventListenerPr
                     try {
                         senderProvider.send(keycloakSession.getContext().getRealm().getSmtpConfig(), user, systemEnv.containsKey(EMAIL_SUBJECT)?systemEnv.get(EMAIL_SUBJECT):DEFAULT_EMAIL_SUBJECT, null,
                                 getHtmlBody());
-                    } catch (ParseException e) {
-                        e.printStackTrace();
-                    } catch (MalformedTemplateNameException e) {
-                        e.printStackTrace();
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    } catch (TemplateException e) {
-                        e.printStackTrace();
-                    } catch (EmailException e) {
-                        e.printStackTrace();
+                    } catch (Exception e) {
+                        log.error("Error sending email to {}",
+                                user.getEmail(), e);
                     }
                 } else {
                     log.info("User or User email not found while sending password update email for userId :" +resourcePathArray[1]);
