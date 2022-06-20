@@ -93,9 +93,9 @@
                   <td class="content-cell" style="${baseTableDataPaddedStyles}">
                     <p style="${baseParagraphStyles}" align="center"><img src="https://www.westerracu.com/docs/email/logo.svg" width="244" height="48" alt="Westerra Credit Union" /></p>
                     <p style="${baseParagraphStyles}" align="left">
-                        Your password information has been changed.
+                        <b> Your Digital Banking password was changed. </b>
                         <br/>
-                        <b> ${emailMessage} </b>
+                        ${emailMessage}
                         <br/>
                     </p>
                   </td>
