@@ -34,7 +34,7 @@ public class UpdatePasswordAdminEventListenerProvider implements EventListenerPr
     public void onEvent(AdminEvent adminEvent, boolean includeRepresentation) {
         Map<String,String> systemEnv = System.getenv();
         if(systemEnv.containsKey(UPDATE_PASSWORD_EMAIL)?systemEnv.get(UPDATE_PASSWORD_EMAIL).equalsIgnoreCase(TRUE):true
-                && adminEvent.getOperationType().equals(OperationType.ACTION) && adminEvent.getResourceType().equals(ResourceType.USER)) {
+                && OperationType.ACTION.equals(adminEvent.getOperationType()) && ResourceType.USER.equals(adminEvent.getResourceType()) && adminEvent.getResourcePath()!=null) {
 
             String[] resourcePathArray = adminEvent.getResourcePath().split("/");
             if(resourcePathArray.length==3 && resourcePathArray[2].equalsIgnoreCase("reset-password")) {
