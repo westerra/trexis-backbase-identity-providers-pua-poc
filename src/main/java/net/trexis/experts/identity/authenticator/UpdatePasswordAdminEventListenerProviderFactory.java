@@ -1,7 +1,6 @@
 package net.trexis.experts.identity.authenticator;
 
-import com.finite.ApiClient;
-import com.finite.api.EntityApi;
+import net.trexis.experts.identity.model.EmailConfiguration;
 import org.keycloak.Config;
 import org.keycloak.events.EventListenerProvider;
 import org.keycloak.events.EventListenerProviderFactory;
@@ -12,7 +11,8 @@ public class UpdatePasswordAdminEventListenerProviderFactory implements EventLis
 
     @Override
     public EventListenerProvider create(KeycloakSession keycloakSession) {
-        return new UpdatePasswordAdminEventListenerProvider(keycloakSession);
+        //In no-arg constructor(EmailConfiguration) we are setting values from System variables
+        return new UpdatePasswordAdminEventListenerProvider(keycloakSession,new EmailConfiguration());
     }
 
     @Override
