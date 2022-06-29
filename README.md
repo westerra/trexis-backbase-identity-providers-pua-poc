@@ -82,11 +82,6 @@ GRANT_TYPE: password
 LAST_LOGIN_DAYS: 5
 OTP_DIGIT: 8
 OTP_PERIOD : 60
-MESSAGE: "If you did not make this change or if you have any questions, please contact us immediately at our contact number (123-456-7890).<br><br>Please do not reply directly to this email as we will not receive your message."
-EMAIL_SUBJECT: "Alert: Digital Banking Password Changed"
-TEMPLATE: "sendContactUpdateEmail.ftl"
-EMAIL_FOOTER: "&copy;2022 By Your Bank.<br>All rights reserved."
-UPDATE_PASSWORD_EMAIL: "true"
 ```
 
 ## Keycloak Event Handlers
