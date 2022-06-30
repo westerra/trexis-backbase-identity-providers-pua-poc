@@ -15,7 +15,7 @@ import java.io.StringWriter;
 import java.io.Writer;
 import java.util.HashMap;
 import java.util.Map;
-import static net.trexis.experts.identity.configuration.Constants.*;
+import net.trexis.experts.identity.configuration.Constants;
 
 public class UpdatePasswordAdminEventListenerProvider implements EventListenerProvider {
 
@@ -33,16 +33,16 @@ public class UpdatePasswordAdminEventListenerProvider implements EventListenerPr
     }
 
     public void onEvent(AdminEvent adminEvent, boolean includeRepresentation) {
-        Map<String,String> systemEnv = System.getenv();
-        if(emailConfiguration.getEnabled().equalsIgnoreCase(TRUE) && OperationType.ACTION.equals(adminEvent.getOperationType())
-                && ResourceType.USER.equals(adminEvent.getResourceType()) && adminEvent.getResourcePath()!=null) {
+        if(emailConfiguration.getEnabled().equalsIgnoreCase(Constants.TRUE) && OperationType.ACTION==adminEvent.getOperationType()
+                && ResourceType.USER==adminEvent.getResourceType() && adminEvent.getResourcePath()!=null) {
 
             String[] resourcePathArray = adminEvent.getResourcePath().split("/");
             if(resourcePathArray.length==3 && resourcePathArray[2].equalsIgnoreCase("reset-password")) {
 
                 RealmModel realm = keycloakSession.realms().getRealm(adminEvent.getRealmId());
                 var user = keycloakSession.users().getUserById(resourcePathArray[1], realm);
-                if(user!=null & user.getEmail()!=null) {
+
+                if(user!=null && user.getEmail()!=null) {
 
                     org.keycloak.email.DefaultEmailSenderProvider senderProvider = new org.keycloak.email.DefaultEmailSenderProvider(keycloakSession);
                     try {
