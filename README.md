@@ -71,6 +71,7 @@ ENROLLMENT_SERVICE_EVALUATE_LIMITED_PATH: "/enrollments/backbase/limited"
 ### Identity Provider
 
 Example of configuration in Identity for Identity Provider:
+Note for MFA : We need to compare Login events for MFA,For this we need to turn on Login Events from Identity -> Event -> Config else it will do MFA always.
 
 ```yaml
 GET_ACCESS_TOKEN_BASE_URL: "http://host.docker.internal:8180/auth/realms/master/protocol/openid-connect/token"
