@@ -40,6 +40,9 @@ public class ChannelSelectorAuthenticator implements Authenticator {
     private static final String PASSWORD = "PASSWORD";
     private static final String GRANT_TYPE = "GRANT_TYPE";
     private static final String LAST_LOGIN_DAYS = "LAST_LOGIN_DAYS";
+    private static final String LAST_IP_CHECK = "LAST_IP_CHECK";
+    private static final Integer LAST_IP_CHECK_DEFAULT = 4;
+
     private static final Logger log = Logger.getLogger(ChannelSelectorAuthenticator.class);
 
     private final OtpChannelService otpChannelService;
@@ -134,6 +137,7 @@ public class ChannelSelectorAuthenticator implements Authenticator {
         String userId = context.getUser().getId();
         String eventType = "LOGIN";
         String getUserEventsBaseUrl = System.getenv(GET_USER_EVENTS_BASE_URL) + "?type=" + eventType + "&user=" + userId + "&dateFrom=" + dateFrom;
+        Integer lastIpAddressCheck = System.getenv().containsKey(LAST_IP_CHECK)?Integer.parseInt(System.getenv(LAST_IP_CHECK)):LAST_IP_CHECK_DEFAULT;
 
         OkHttpClient client = new OkHttpClient().newBuilder().build();
         Request getUserEventsRequestRequest = new Request.Builder()
@@ -151,7 +155,7 @@ public class ChannelSelectorAuthenticator implements Authenticator {
                 if (userLoginDetails != null && userLoginDetails.length > 0) {
                     boolean isLoginValid = false;
                     //checking for last 4 ip address
-                    var lastLoginCheckMaxIndex = userLoginDetails.length >= 4 ? 3 : userLoginDetails.length - 1;
+                    var lastLoginCheckMaxIndex = userLoginDetails.length >= lastIpAddressCheck ? lastIpAddressCheck-1 : userLoginDetails.length - 1;
                     for (int i = 0; i <= lastLoginCheckMaxIndex; i++) {
                         if (userLoginDetails[i].getIpAddress().equals(currentLoginIpAddress)) {
                             isLoginValid = true;
