@@ -71,6 +71,22 @@ ENROLLMENT_SERVICE_EVALUATE_LIMITED_PATH: "/enrollments/backbase/limited"
 ### Identity Provider
 
 Example of configuration in Identity for Identity Provider:
+> Note for MFA : We need to compare Login events for MFA,For this we need to turn on Login Events from Identity -> Event ->  Config -> Login Events Settings (Where in Saved Types "LOGIN" must be there)
+else it will do MFA always.
+> Note for LAST_LOGIN_DAYS : LAST_LOGIN_DAYS must be there. It's number of days to check last login and also select login event for those days to compare IpAddress If we have enabled Login events.
+> Note for LAST_IP_CHECK : It's number of IpAddresses(Login Event) to compare with current login IpAddress. Default value is 4
+> For Example (Today: 10th January,2022) if we set LAST_LOGIN_DAYS to 5 and LAST_IP_CHECK to 6 it will do MFA if user did not login for last 5 days.(From 5th January,2022). If we have enabled Login event then we will take Login events for last 5 days (From 5th January,2022) and compare last 6 Login IpAddress with current one.
+> Note for OTP_DIGIT : It's number of digit for OTP. Default value is 8
+> Note for OTP_PERIOD : It's number of Second for OTP period. Default value is 60
+> Note for Password update Email : We need add Event Listeners from Identity -> Event -> Config -> Event Listeners (Select "update-password-email" from dropdown) and also need to turn on Admin Events from Identity -> Event ->  Config -> Admin Events Settings to get email for user password update. We can set email body message, footer and subject from configuration (EMAIL_SUBJECT,MESSAGE,EMAIL_FOOTER). 
+> Note for UPDATE_PASSWORD_EMAIL : After adding Event Listener and Admin Events we can enable/disable user password update email with this configuration. Default value is true
+
+> Note for MFA cases : we can set 4 different values(case-insensitive) for user attribute (identity->users->attributes->key:mfaRequired) : true,false,alwaysTrue,alwaysFalse
+> For alwaysTrue, It will always do MFA and after successful login with MFA user attribute(mfaRequired) will be as it is(alwaysTrue).
+> For alwaysFalse, It will never do MFA.
+> For true, It will do MFA on next immediate login and after successful login with MFA user attribute(mfaRequired) will set to false.
+> For false, It will do MFA based on condition.If condition returns true, We will make user attribute(mfaRequired) to true while doing login with MFA and after successful login we will set to false.
+> In condition check we will check based on LAST_LOGIN_DAYS. For Example (Today: 10th January,2022) if we set LAST_LOGIN_DAYS to 5 and LAST_IP_CHECK to 6 it will do MFA if user did not login for last 5 days.(From 5th January,2022). If we have enabled Login event then we will take Login events for last 5 days (From 5th January,2022) and compare last 6 Login IpAddress with current one.
 
 ```yaml
 GET_ACCESS_TOKEN_BASE_URL: "http://host.docker.internal:8180/auth/realms/master/protocol/openid-connect/token"
