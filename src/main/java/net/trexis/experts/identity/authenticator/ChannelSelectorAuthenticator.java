@@ -136,9 +136,9 @@ public class ChannelSelectorAuthenticator implements Authenticator {
         String currentLoginIpAddress = context.getHttpRequest().getRemoteAddress();
         String userId = context.getUser().getId();
         String eventType = "LOGIN";
-        String getUserEventsBaseUrl = System.getenv(GET_USER_EVENTS_BASE_URL) + "?type=" + eventType + "&user=" + userId + "&dateFrom=" + dateFrom;
         Integer lastIpAddressCheck = System.getenv().containsKey(LAST_IP_CHECK)?Integer.parseInt(System.getenv(LAST_IP_CHECK)):LAST_IP_CHECK_DEFAULT;
-
+        String getUserEventsBaseUrl = System.getenv(GET_USER_EVENTS_BASE_URL) + "?type=" + eventType + "&user=" + userId + "&dateFrom=" + dateFrom + "&max=" + lastIpAddressCheck;
+        
         OkHttpClient client = new OkHttpClient().newBuilder().build();
         Request getUserEventsRequestRequest = new Request.Builder()
                 .url(getUserEventsBaseUrl)
@@ -154,7 +154,7 @@ public class ChannelSelectorAuthenticator implements Authenticator {
                 UserLoginDetails[] userLoginDetails = new Gson().fromJson(convertedObjectForUserLoginDetails, UserLoginDetails[].class);
                 if (userLoginDetails != null && userLoginDetails.length > 0) {
                     boolean isLoginValid = false;
-                    //checking for last 4 ip address
+                    log.info("Comparing last " + userLoginDetails.length + " login IP address");
                     var lastLoginCheckMaxIndex = userLoginDetails.length >= lastIpAddressCheck ? lastIpAddressCheck-1 : userLoginDetails.length - 1;
                     for (int i = 0; i <= lastLoginCheckMaxIndex; i++) {
                         if (userLoginDetails[i].getIpAddress().equals(currentLoginIpAddress)) {
@@ -176,7 +176,7 @@ public class ChannelSelectorAuthenticator implements Authenticator {
                 context.getUser().setSingleAttribute(Constants.USER_ATTRIBUTE_MFA_REQUIRED, MfaAttributeEnum.TRUE.getValue());
             }
         } catch (IOException e) {
-            e.printStackTrace();
+            log.error("Setting MFA for User,Due to IOException while checking last logins : ",e);
             context.getUser().setSingleAttribute(Constants.USER_ATTRIBUTE_MFA_REQUIRED, MfaAttributeEnum.TRUE.getValue());
         }
     }
@@ -214,7 +214,7 @@ public class ChannelSelectorAuthenticator implements Authenticator {
                 context.getUser().setSingleAttribute(Constants.USER_ATTRIBUTE_MFA_REQUIRED,MfaAttributeEnum.TRUE.getValue());
             }
         } catch (IOException e) {
-            e.printStackTrace();
+            log.error("Setting MFA for User,Due to IOException while getting access token : ",e);
             context.getUser().setSingleAttribute(Constants.USER_ATTRIBUTE_MFA_REQUIRED,MfaAttributeEnum.TRUE.getValue());
         }
         return accessTokenModel;
