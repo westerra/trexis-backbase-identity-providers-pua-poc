@@ -3,6 +3,7 @@ package net.trexis.experts.identity.authenticator;
 import com.finite.api.EntityApi;
 import com.finite.api.model.ContactPoint;
 import com.finite.api.model.EntityProfile;
+import java.util.stream.Collectors;
 import org.jboss.logging.Logger;
 import org.keycloak.events.Event;
 import org.keycloak.events.EventListenerProvider;
@@ -54,7 +55,19 @@ public class UpdateProfileListenerProvider implements EventListenerProvider {
                             .type(EMAIL)
                             .value(updatedEmail);
 
-                    entityApi.putEntityProfile(entityId, new EntityProfile().addContactPointsItem(contactPoint), "trexis-backbase-identity-providers", null, false, false);
+                    var existingEntityProfile = entityApi.getEntityProfile(entityId, null, false, false, "trexis-backbase-identity-providers", null);
+
+                    var updatedContactPoints = existingEntityProfile.getContactPoints().stream()
+                                    .map(existingContactPoint -> {
+                                        if (existingContactPoint.getType() == EMAIL && primaryEmailName.equals(existingContactPoint.getName())) {
+                                            existingContactPoint.setValue(updatedEmail);
+                                        }
+                                        return existingContactPoint;
+                                    })
+                                    .collect(Collectors.toList());
+                    existingEntityProfile.setContactPoints(updatedContactPoints);
+
+                    entityApi.putEntityProfile(entityId, existingEntityProfile, "trexis-backbase-identity-providers", null, false, false);
                     log.info("successfully saved email to core");
                 });
     }
