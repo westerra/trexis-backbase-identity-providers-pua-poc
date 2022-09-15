@@ -3,6 +3,7 @@ package net.trexis.experts.identity.authenticator;
 import com.finite.api.EntityApi;
 import com.finite.api.model.ContactPoint;
 import com.finite.api.model.EntityProfile;
+import java.util.stream.Collectors;
 import org.jboss.logging.Logger;
 import org.keycloak.events.Event;
 import org.keycloak.events.EventListenerProvider;
@@ -19,6 +20,7 @@ import static org.keycloak.events.EventType.UPDATE_EMAIL;
 public class UpdateProfileListenerProvider implements EventListenerProvider {
 
     private static final Logger log = Logger.getLogger(UpdateProfileListenerProvider.class);
+    private static final String X_TRACE_ID = "trexis-backbase-identity-providers";
 
     private final KeycloakSession keycloakSession;
     private final EntityApi entityApi;
@@ -54,7 +56,19 @@ public class UpdateProfileListenerProvider implements EventListenerProvider {
                             .type(EMAIL)
                             .value(updatedEmail);
 
-                    entityApi.putEntityProfile(entityId, new EntityProfile().addContactPointsItem(contactPoint), "trexis-backbase-identity-providers", null, false, false);
+                    var existingEntityProfile = entityApi.getEntityProfile(entityId, null, false, false, X_TRACE_ID, null);
+
+                    var updatedContactPoints = existingEntityProfile.getContactPoints().stream()
+                                    .map(existingContactPoint -> {
+                                        if (existingContactPoint.getType() == EMAIL && primaryEmailName.equalsIgnoreCase(existingContactPoint.getName())) {
+                                            existingContactPoint.setValue(updatedEmail);
+                                        }
+                                        return existingContactPoint;
+                                    })
+                                    .collect(Collectors.toList());
+                    existingEntityProfile.setContactPoints(updatedContactPoints);
+
+                    entityApi.putEntityProfile(entityId, existingEntityProfile, X_TRACE_ID, null, false, false);
                     log.info("successfully saved email to core");
                 });
     }
