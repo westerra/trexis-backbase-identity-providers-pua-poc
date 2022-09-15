@@ -20,6 +20,7 @@ import static org.keycloak.events.EventType.UPDATE_EMAIL;
 public class UpdateProfileListenerProvider implements EventListenerProvider {
 
     private static final Logger log = Logger.getLogger(UpdateProfileListenerProvider.class);
+    private static final String X_TRACE_ID = "trexis-backbase-identity-providers";
 
     private final KeycloakSession keycloakSession;
     private final EntityApi entityApi;
@@ -55,7 +56,7 @@ public class UpdateProfileListenerProvider implements EventListenerProvider {
                             .type(EMAIL)
                             .value(updatedEmail);
 
-                    var existingEntityProfile = entityApi.getEntityProfile(entityId, null, false, false, "trexis-backbase-identity-providers", null);
+                    var existingEntityProfile = entityApi.getEntityProfile(entityId, null, false, false, X_TRACE_ID, null);
 
                     var updatedContactPoints = existingEntityProfile.getContactPoints().stream()
                                     .map(existingContactPoint -> {
@@ -67,7 +68,7 @@ public class UpdateProfileListenerProvider implements EventListenerProvider {
                                     .collect(Collectors.toList());
                     existingEntityProfile.setContactPoints(updatedContactPoints);
 
-                    entityApi.putEntityProfile(entityId, existingEntityProfile, "trexis-backbase-identity-providers", null, false, false);
+                    entityApi.putEntityProfile(entityId, existingEntityProfile, X_TRACE_ID, null, false, false);
                     log.info("successfully saved email to core");
                 });
     }
