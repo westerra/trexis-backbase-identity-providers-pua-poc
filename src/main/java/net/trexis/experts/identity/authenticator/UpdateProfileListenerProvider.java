@@ -59,7 +59,7 @@ public class UpdateProfileListenerProvider implements EventListenerProvider {
 
                     var updatedContactPoints = existingEntityProfile.getContactPoints().stream()
                                     .map(existingContactPoint -> {
-                                        if (existingContactPoint.getType() == EMAIL && primaryEmailName.equals(existingContactPoint.getName())) {
+                                        if (existingContactPoint.getType() == EMAIL && primaryEmailName.equalsIgnoreCase(existingContactPoint.getName())) {
                                             existingContactPoint.setValue(updatedEmail);
                                         }
                                         return existingContactPoint;
