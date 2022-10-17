@@ -29,6 +29,7 @@ public class OtpAuthenticatorFactory implements AuthenticatorFactory, Configurab
     private static final String PROVIDER_ID = "otp-authenticator";
     private static final String OTP_DIGIT = "OTP_DIGIT";
     private static final String OTP_PERIOD = "OTP_PERIOD";
+    private static final String LOOKAHEAD_WINDOW = "LOOKAHEAD_WINDOW";
 
     private static final Requirement[] requirements;
     private static final OtpAuthenticatorConfiguration otpAuthenticatorConfiguration;
@@ -72,7 +73,7 @@ public class OtpAuthenticatorFactory implements AuthenticatorFactory, Configurab
         lookAheadWindow.setLabel("Lookahead Window");
         lookAheadWindow.setType(STRING_TYPE);
         lookAheadWindow.setHelpText("Lookahead Window");
-        lookAheadWindow.setDefaultValue(1);
+        lookAheadWindow.setDefaultValue(systemEnv.containsKey(LOOKAHEAD_WINDOW)?systemEnv.get(LOOKAHEAD_WINDOW):1);
         configProperties.add(lookAheadWindow);
 
         otpPeriod = new ProviderConfigProperty();
