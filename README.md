@@ -88,6 +88,10 @@ else it will do MFA always.
 > For false, It will do MFA based on condition.If condition returns true, We will make user attribute(mfaRequired) to true while doing login with MFA and after successful login we will set to false.
 > In condition check we will check based on LAST_LOGIN_DAYS. For Example (Today: 10th January,2022) if we set LAST_LOGIN_DAYS to 5 and LAST_IP_CHECK to 6 it will do MFA if user did not login for last 5 days.(From 5th January,2022). If we have enabled Login event then we will take Login events for last 5 days (From 5th January,2022) and compare last 6 Login IpAddress with current one.
 
+> Note for LOOKAHEAD_WINDOW : It can be 0, 1 or any other numeric value. Default value is 1.
+> For example, if the time interval for a token(OTP) is 30 seconds,the value of 0 means it will accept valid tokens in the 30-second window only. (time interval of 30 seconds)
+> For example, if the time interval for a token(OTP) is 30 seconds,the default value of 1 means it will accept valid tokens in the 90-second window (time interval 30 seconds + look ahead 30 seconds + look behind 30 seconds). Every increment of this value increases the valid window by 60 seconds.
+
 ```yaml
 GET_ACCESS_TOKEN_BASE_URL: "http://host.docker.internal:8180/auth/realms/master/protocol/openid-connect/token"
 GET_USER_EVENTS_BASE_URL: "http://host.docker.internal:8180/auth/admin/realms/backbase/events"
@@ -98,6 +102,7 @@ GRANT_TYPE: password
 LAST_LOGIN_DAYS: 5
 OTP_DIGIT: 8
 OTP_PERIOD : 60
+LOOKAHEAD_WINDOW : 0
 MESSAGE: "If you did not make this change or if you have any questions, please contact us immediately at our contact number (123-456-7890).<br><br>Please do not reply directly to this email as we will not receive your message."
 EMAIL_SUBJECT: "Alert: Digital Banking Password Changed"
 TEMPLATE: "sendContactUpdateEmail.ftl"
