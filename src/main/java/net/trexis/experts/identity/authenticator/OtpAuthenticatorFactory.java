@@ -2,10 +2,12 @@ package net.trexis.experts.identity.authenticator;
 
 import com.backbase.identity.authenticators.otp.CommunicationService;
 import com.backbase.identity.authenticators.otp.OtpAuthenticatorConfiguration;
-import com.backbase.identity.authenticators.otp.OtpChannelService;
 import com.backbase.identity.authenticators.otp.SecretProvider;
 import com.backbase.identity.util.DefaultCacheSupplier;
 import com.backbase.identity.util.OtpChannelPropertiesConverter;
+
+import net.trexis.experts.identity.service.OtpChannelService;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;

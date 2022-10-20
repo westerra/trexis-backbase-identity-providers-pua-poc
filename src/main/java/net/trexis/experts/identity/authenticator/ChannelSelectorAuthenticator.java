@@ -1,6 +1,5 @@
 package net.trexis.experts.identity.authenticator;
 
-import com.backbase.identity.authenticators.otp.OtpChannelService;
 import com.backbase.identity.authenticators.otp.model.OtpChoice;
 import com.google.common.base.Strings;
 import com.google.gson.Gson;
@@ -16,6 +15,7 @@ import net.trexis.experts.identity.model.AccessTokenModel;
 import net.trexis.experts.identity.model.MfaAttributeEnum;
 import net.trexis.experts.identity.model.OtpChoiceRepresentation;
 import net.trexis.experts.identity.model.UserLoginDetails;
+import net.trexis.experts.identity.service.OtpChannelService;
 import net.trexis.experts.identity.util.ChannelSelectorUtil;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
@@ -68,39 +68,10 @@ public class ChannelSelectorAuthenticator implements Authenticator {
                 context.getUser().setSingleAttribute(Constants.USER_ATTRIBUTE_MFA_REQUIRED,TRUE);
             }
         }
-        if (mfaIsRequired(context.getUser())) {
-            resetUsersChoices(context);
-            Response challenge;
-            List<OtpChoiceRepresentation> otpChoiceList = getChoiceRepresentationList(context);
-            log.debug("Choices count: " + otpChoiceList.size());
-            log.debug(otpChoiceList);
-            if (otpChoiceList.isEmpty()) {
-                log.warn("No choices found for user: " + context.getUser().getUsername());
-                context.clearUser();
-                context.challenge(context.form()
-                        .setInfo("Could not find any MFA choices associated to your account.")
-                        .createLoginUsernamePassword());
-                return;
-            }
-            if (otpChoiceList.size() == 1) {
-                log.debug("Only one mfa choice found, skipping selection");
-                OtpChoiceRepresentation otpChoice = otpChoiceList.stream().findFirst().get();
-                context.getAuthenticationSession().setAuthNote(Constants.OTP_CHOICE_ADDRESS_ID, otpChoice.getAddressId());
-                context.success();
-                return;
-            }
-            challenge = context.form()
-                    .setAttribute("otpChoiceList", otpChoiceList)
-                    .createForm(MFA_CHOICE_TEMPLATE);
-            context.challenge(challenge);
-        } else {
-            log.debugv("User {0} is NOT required to do MFA", context.getUser().getUsername());
-            context.success();
-            return;
-        }
 
         resetUsersChoices(context);
         var otpChoiceList = getChoiceRepresentationList(context);
+        //group optChoiceList by channel
         log.debug("Choices count: " + otpChoiceList.size());
         log.debug(otpChoiceList);
         if (otpChoiceList.isEmpty()) {
@@ -122,8 +93,10 @@ public class ChannelSelectorAuthenticator implements Authenticator {
             return;
         }
 
+        var otpChoiceListByChannel = otpChoiceList.stream().collect(Collectors.groupingBy(OtpChoiceRepresentation::getChannel));
         Response challenge = context.form()
-                .setAttribute("otpChoiceList", otpChoiceList)
+                .setAttribute("otpChoiceList", otpChoiceList)//TODO: should we leave this to support the old style?
+                .setAttribute("otpChoiceByChannel", otpChoiceListByChannel)
                 .createForm(MFA_CHOICE_TEMPLATE);
         context.challenge(challenge);
     }
@@ -138,7 +111,7 @@ public class ChannelSelectorAuthenticator implements Authenticator {
         String eventType = "LOGIN";
         Integer lastIpAddressCheck = System.getenv().containsKey(LAST_IP_CHECK)?Integer.parseInt(System.getenv(LAST_IP_CHECK)):LAST_IP_CHECK_DEFAULT;
         String getUserEventsBaseUrl = System.getenv(GET_USER_EVENTS_BASE_URL) + "?type=" + eventType + "&user=" + userId + "&dateFrom=" + dateFrom + "&max=" + lastIpAddressCheck;
-        
+
         OkHttpClient client = new OkHttpClient().newBuilder().build();
         Request getUserEventsRequestRequest = new Request.Builder()
                 .url(getUserEventsBaseUrl)
@@ -221,6 +194,7 @@ public class ChannelSelectorAuthenticator implements Authenticator {
     }
 
     protected List<OtpChoiceRepresentation> getChoiceRepresentationList(AuthenticationFlowContext context) {
+        log.debug("Fetching MFA options for user: " + context.getUser().getUsername());
         return otpChannelService.getAvailableOtpChoices(context).stream()
                 .map(choice -> {
                     log.debug("OTP chose address: " + choice.getAddress() +

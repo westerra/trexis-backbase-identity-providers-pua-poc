@@ -1,7 +1,6 @@
 package net.trexis.experts.identity.authenticator;
 
 import com.backbase.identity.authenticators.otp.CommunicationService;
-import com.backbase.identity.authenticators.otp.OtpChannelService;
 import com.backbase.identity.authenticators.otp.SecretProvider;
 import com.backbase.identity.authenticators.otp.exception.OtpDeliveryException;
 import com.backbase.identity.authenticators.otp.model.IdentityTotpConfig;
@@ -20,6 +19,8 @@ import javax.ws.rs.core.Response;
 
 import net.trexis.experts.identity.configuration.Constants;
 import net.trexis.experts.identity.model.MfaAttributeEnum;
+import net.trexis.experts.identity.service.OtpChannelService;
+
 import org.jboss.logging.Logger;
 import org.keycloak.authentication.AuthenticationFlowContext;
 import org.keycloak.authentication.Authenticator;
