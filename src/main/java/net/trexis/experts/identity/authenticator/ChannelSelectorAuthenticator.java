@@ -21,6 +21,7 @@ import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.RequestBody;
+
 import org.jboss.logging.Logger;
 import org.keycloak.authentication.AuthenticationFlowContext;
 import org.keycloak.authentication.Authenticator;
@@ -46,9 +47,15 @@ public class ChannelSelectorAuthenticator implements Authenticator {
     private static final Logger log = Logger.getLogger(ChannelSelectorAuthenticator.class);
 
     private final OtpChannelService otpChannelService;
+    private final OkHttpClient client;
 
     public ChannelSelectorAuthenticator(OtpChannelService otpChannelService) {
+        this(otpChannelService, new OkHttpClient().newBuilder().build());
+    }
+
+    ChannelSelectorAuthenticator(OtpChannelService otpChannelService, OkHttpClient client) {
         this.otpChannelService = otpChannelService;
+        this.client = client;
     }
 
     @Override
@@ -60,34 +67,34 @@ public class ChannelSelectorAuthenticator implements Authenticator {
             return;
         }
 
-        if(!mfaIsRequired(context.getUser())) {
-            AccessTokenModel accessTokenModel = getAccessToken(context);
-            if (!mfaIsRequired(context.getUser()) && accessTokenModel != null) {
-                checkLastValidLogin(context, accessTokenModel);
-            } else {
-                context.getUser().setSingleAttribute(Constants.USER_ATTRIBUTE_MFA_REQUIRED,TRUE);
-            }
+        //mfaRequired may be set to 'false' in this case we need to
+        //make sure IP address hasn't changed since last 4 logins
+        if(!mfaIsRequired(context.getUser()) && checkLastValidLogin(context)) {
+            context.success();
+            return;
+        } else {
+            log.warn("else setting mfa required to true");
+            context.getUser().setSingleAttribute(Constants.USER_ATTRIBUTE_MFA_REQUIRED,TRUE);
         }
 
         resetUsersChoices(context);
         var otpChoiceList = getChoiceRepresentationList(context);
         //group optChoiceList by channel
         log.debug("Choices count: " + otpChoiceList.size());
-        log.debug(otpChoiceList);
         if (otpChoiceList.isEmpty()) {
             log.warn("No choices found for user: " + context.getUser().getUsername());
             context.clearUser();
             context.challenge(context.form()
-                    .setInfo("Could not find any MFA choices associated to your account.")
-                    .createLoginUsernamePassword());
+            .setInfo("We are sorry we could not find any MFA choices associated to your account.")
+            .createLoginUsernamePassword());
             return;
         }
 
         if (otpChoiceList.size() == 1) {
             log.debug("Only one mfa choice found, skipping selection");
             OtpChoiceRepresentation otpChoice = otpChoiceList.stream()
-                    .findFirst()
-                    .orElseThrow();
+            .findFirst()
+            .orElseThrow();
             context.getAuthenticationSession().setAuthNote(OTP_CHOICE_ADDRESS_ID, otpChoice.getAddressId());
             context.success();
             return;
@@ -101,7 +108,14 @@ public class ChannelSelectorAuthenticator implements Authenticator {
         context.challenge(challenge);
     }
 
-    private void checkLastValidLogin(AuthenticationFlowContext context, AccessTokenModel accessTokenModel) {
+    private boolean checkLastValidLogin(AuthenticationFlowContext context) {
+        log.warn("checking last valid login!!");
+        //fetch token
+        AccessTokenModel accessTokenModel = getAccessToken(context);
+        if(accessTokenModel == null) {
+            log.warn("access token is null");
+            return false;
+        }
         String lastLoginDaysToCheck = System.getenv(LAST_LOGIN_DAYS);
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
         LocalDate currentLocalDate = LocalDate.now().minusDays(Long.parseLong(lastLoginDaysToCheck));
@@ -109,10 +123,9 @@ public class ChannelSelectorAuthenticator implements Authenticator {
         String currentLoginIpAddress = context.getHttpRequest().getRemoteAddress();
         String userId = context.getUser().getId();
         String eventType = "LOGIN";
+        String getUserEventsBaseUrl = System.getenv(GET_USER_EVENTS_BASE_URL) + "?type=" + eventType + "&user=" + userId + "&dateFrom=" + dateFrom;
         Integer lastIpAddressCheck = System.getenv().containsKey(LAST_IP_CHECK)?Integer.parseInt(System.getenv(LAST_IP_CHECK)):LAST_IP_CHECK_DEFAULT;
-        String getUserEventsBaseUrl = System.getenv(GET_USER_EVENTS_BASE_URL) + "?type=" + eventType + "&user=" + userId + "&dateFrom=" + dateFrom + "&max=" + lastIpAddressCheck;
 
-        OkHttpClient client = new OkHttpClient().newBuilder().build();
         Request getUserEventsRequestRequest = new Request.Builder()
                 .url(getUserEventsBaseUrl)
                 .method("GET", null)
@@ -121,37 +134,38 @@ public class ChannelSelectorAuthenticator implements Authenticator {
                 .build();
         try {
             okhttp3.Response getUserEventsRequestResponse = client.newCall(getUserEventsRequestRequest).execute();
-            if (getUserEventsRequestResponse.isSuccessful() && getUserEventsRequestResponse.body() != null) {
-                String convertedObjectForUserLoginDetails = getUserEventsRequestResponse.body().string();
-                log.debug("convertedObjectForUserLoginDetails :" + convertedObjectForUserLoginDetails);
-                UserLoginDetails[] userLoginDetails = new Gson().fromJson(convertedObjectForUserLoginDetails, UserLoginDetails[].class);
-                if (userLoginDetails != null && userLoginDetails.length > 0) {
-                    boolean isLoginValid = false;
-                    log.info("Comparing last " + userLoginDetails.length + " login IP address");
-                    var lastLoginCheckMaxIndex = userLoginDetails.length >= lastIpAddressCheck ? lastIpAddressCheck-1 : userLoginDetails.length - 1;
-                    for (int i = 0; i <= lastLoginCheckMaxIndex; i++) {
-                        if (userLoginDetails[i].getIpAddress().equals(currentLoginIpAddress)) {
-                            isLoginValid = true;
-                            log.info("Same IpAddress Found From Last 4 Logins , Hence NOT required to do MFA");
-                            break;
-                        }
-                    }
-                    if (!isLoginValid) {
-                        log.info("New IpAddress Found, Setting MFA for User");
-                        context.getUser().setSingleAttribute(Constants.USER_ATTRIBUTE_MFA_REQUIRED, MfaAttributeEnum.TRUE.getValue());
-                    }
-                } else {
-                    log.info("User Login Details Not Found, Setting MFA for User");
-                    context.getUser().setSingleAttribute(Constants.USER_ATTRIBUTE_MFA_REQUIRED, MfaAttributeEnum.TRUE.getValue());
+            if (getUserEventsRequestResponse == null || getUserEventsRequestResponse.body() == null || !getUserEventsRequestResponse.isSuccessful()) {
+                log.warn("Setting MFA for User,Due to unexpected getUserEventsRequestResponse : " + getUserEventsRequestResponse);
+                return false;
+            }
+
+            String convertedObjectForUserLoginDetails = getUserEventsRequestResponse.body().string();
+            log.warn("convertedObjectForUserLoginDetails :" + convertedObjectForUserLoginDetails);
+            UserLoginDetails[] userLoginDetails = new Gson().fromJson(convertedObjectForUserLoginDetails, UserLoginDetails[].class);
+            if (userLoginDetails == null || userLoginDetails.length == 0) {
+                log.warn("User Login Details Not Found, Setting MFA for User");
+                return false;
+            }
+            boolean isLoginValid = true;
+            //checking for last 4 ip address
+            var lastLoginCheckMaxIndex = userLoginDetails.length >= lastIpAddressCheck ? lastIpAddressCheck-1 : userLoginDetails.length - 1;
+            for (int i = 0; i <= lastLoginCheckMaxIndex; i++) {
+                if (!userLoginDetails[i].getIpAddress().equals(currentLoginIpAddress)) {
+                    isLoginValid = false;
+                    break;
                 }
-            } else {
-                log.info("Setting MFA for User,Due to unexpected getUserEventsRequestResponse : " + getUserEventsRequestResponse);
-                context.getUser().setSingleAttribute(Constants.USER_ATTRIBUTE_MFA_REQUIRED, MfaAttributeEnum.TRUE.getValue());
+            }
+            if (!isLoginValid) {
+                log.warn("New IpAddress Found, Setting MFA for User");
+                return false;
             }
         } catch (IOException e) {
-            log.error("Setting MFA for User,Due to IOException while checking last logins : ",e);
-            context.getUser().setSingleAttribute(Constants.USER_ATTRIBUTE_MFA_REQUIRED, MfaAttributeEnum.TRUE.getValue());
+            log.error("Error while getting user events MFA required!\n", e);
+            return false;
         }
+        log.warn("Same IpAddress Found From Last 4 Logins , Hence NOT required to do MFA");
+        return true;
+
     }
 
     private AccessTokenModel getAccessToken(AuthenticationFlowContext context) {
@@ -162,7 +176,6 @@ public class ChannelSelectorAuthenticator implements Authenticator {
         String grantType = System.getenv(GRANT_TYPE);
         AccessTokenModel accessTokenModel = null;
 
-        OkHttpClient client = new OkHttpClient().newBuilder().build();
         String getAccessTokenBodyContent = "client_id=" + clientId + "&username=" + username + "&password=" + password + "&grant_type=" + grantType;
         RequestBody getAccessTokenBody = RequestBody.create(MediaType.parse("application/x-www-form-urlencoded"), getAccessTokenBodyContent);
         Request getAccessTokenRequest = new Request.Builder()
@@ -187,7 +200,7 @@ public class ChannelSelectorAuthenticator implements Authenticator {
                 context.getUser().setSingleAttribute(Constants.USER_ATTRIBUTE_MFA_REQUIRED,MfaAttributeEnum.TRUE.getValue());
             }
         } catch (IOException e) {
-            log.error("Setting MFA for User,Due to IOException while getting access token : ",e);
+            log.error("Setting MFA for User,Due to IOException while getting access token :\n",e);
             context.getUser().setSingleAttribute(Constants.USER_ATTRIBUTE_MFA_REQUIRED,MfaAttributeEnum.TRUE.getValue());
         }
         return accessTokenModel;
@@ -226,10 +239,14 @@ public class ChannelSelectorAuthenticator implements Authenticator {
 
         String otpChoiceAddressId = inputData.getFirst(OTP_CHOICE_ADDRESS_ID);
         if (Strings.isNullOrEmpty(otpChoiceAddressId)) {
+            var otpChoiceList = getChoiceRepresentationList(context);
+            var otpChoiceListByChannel = otpChoiceList.stream().collect(Collectors.groupingBy(OtpChoiceRepresentation::getChannel));
             Response challenge = context.form()
-                    .setError("Selection is required.")
+                    .setError("otpSelectionRequired")
+                    .setAttribute("otpChoiceList", otpChoiceList)
+                    .setAttribute("otpChoiceByChannel", otpChoiceListByChannel)
                     .createForm(MFA_CHOICE_TEMPLATE);
-            context.failureChallenge(INVALID_CREDENTIALS, challenge);
+            context.challenge(challenge);
             return;
         }
 
@@ -255,10 +272,13 @@ public class ChannelSelectorAuthenticator implements Authenticator {
     private boolean mfaIsRequired(UserModel userModel) {
         if(MfaAttributeEnum.TRUE.getValue().equalsIgnoreCase(userModel.getFirstAttribute(Constants.USER_ATTRIBUTE_MFA_REQUIRED)) ||
                 MfaAttributeEnum.ALWAYS_TRUE.getValue().equalsIgnoreCase(userModel.getFirstAttribute(Constants.USER_ATTRIBUTE_MFA_REQUIRED))) {
+            log.warn("mfa required 'true' or 'alwaysTrue'");
             return true;
         } else if (MfaAttributeEnum.FALSE.getValue().equalsIgnoreCase(userModel.getFirstAttribute(Constants.USER_ATTRIBUTE_MFA_REQUIRED))) {
+            log.warn("mfa not required 'false'");
             return false;
         } else {
+            log.warn("mfa required 'null' or 'empty' required by default");
             // For any other value (Except : true,false,alwaysTrue,alwaysFalse) we set it to default value : true
             userModel.setSingleAttribute(Constants.USER_ATTRIBUTE_MFA_REQUIRED, MfaAttributeEnum.TRUE.getValue());
             return true;
