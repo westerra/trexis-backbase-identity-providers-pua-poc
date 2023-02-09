@@ -6,6 +6,7 @@ import com.backbase.identity.authenticators.otp.SecretProvider;
 import com.backbase.identity.util.DefaultCacheSupplier;
 import com.backbase.identity.util.OtpChannelPropertiesConverter;
 
+import net.trexis.experts.identity.model.MfaEmailConfiguration;
 import net.trexis.experts.identity.service.OtpChannelService;
 
 import java.util.ArrayList;
@@ -112,7 +113,8 @@ public class OtpAuthenticatorFactory implements AuthenticatorFactory, Configurab
                 secretProvider,
                 communicationService,
                 otpTemplateProviderImplFactory,
-                new DefaultCacheSupplier());
+                new DefaultCacheSupplier(),
+                new MfaEmailConfiguration());
     }
 
     /**

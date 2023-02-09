@@ -62,18 +62,17 @@ public class ChannelSelectorAuthenticator implements Authenticator {
     public void authenticate(AuthenticationFlowContext context) {
 
         if(MfaAttributeEnum.ALWAYS_FALSE.getValue().equalsIgnoreCase(context.getUser().getFirstAttribute(Constants.USER_ATTRIBUTE_MFA_REQUIRED))) {
-            log.info("MfaRequired flag is set to : alwaysFalse , Hence NOT required to do MFA");
+            log.info("MFA required attribute is alwaysFalse, NOT required to do MFA");
             context.success();
             return;
         }
 
-        //mfaRequired may be set to 'false' in this case we need to
-        //make sure IP address hasn't changed since last 4 logins
+        //If MFA required attribute is false, We need to compare with last login IP addresses
         if(!mfaIsRequired(context.getUser()) && checkLastValidLogin(context)) {
             context.success();
             return;
-        } else {
-            log.warn("else setting mfa required to true");
+        } else if(MfaAttributeEnum.FALSE.getValue().equalsIgnoreCase(context.getUser().getFirstAttribute(Constants.USER_ATTRIBUTE_MFA_REQUIRED))){
+            log.warn("Setting MFA required attribute to true");
             context.getUser().setSingleAttribute(Constants.USER_ATTRIBUTE_MFA_REQUIRED,TRUE);
         }
 
@@ -272,15 +271,15 @@ public class ChannelSelectorAuthenticator implements Authenticator {
     private boolean mfaIsRequired(UserModel userModel) {
         if(MfaAttributeEnum.TRUE.getValue().equalsIgnoreCase(userModel.getFirstAttribute(Constants.USER_ATTRIBUTE_MFA_REQUIRED)) ||
                 MfaAttributeEnum.ALWAYS_TRUE.getValue().equalsIgnoreCase(userModel.getFirstAttribute(Constants.USER_ATTRIBUTE_MFA_REQUIRED))) {
-            log.warn("mfa required 'true' or 'alwaysTrue'");
+            log.warn("MFA required attribute is true or alwaysTrue, Required to do MFA");
             return true;
         } else if (MfaAttributeEnum.FALSE.getValue().equalsIgnoreCase(userModel.getFirstAttribute(Constants.USER_ATTRIBUTE_MFA_REQUIRED))) {
-            log.warn("mfa not required 'false'");
+            log.warn("MFA required attribute is false, Checking MFA conditions");
             return false;
         } else {
-            log.warn("mfa required 'null' or 'empty' required by default");
             // For any other value (Except : true,false,alwaysTrue,alwaysFalse) we set it to default value : true
             userModel.setSingleAttribute(Constants.USER_ATTRIBUTE_MFA_REQUIRED, MfaAttributeEnum.TRUE.getValue());
+            log.warn("Required to do MFA cause MFA required attribute is null, empty or any garbage value, Setting it to True");
             return true;
         }
     }
