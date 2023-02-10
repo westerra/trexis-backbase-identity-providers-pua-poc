@@ -55,6 +55,14 @@ INGESTION_SERVICE_SCHEME: "HTTP"
 ### OTP Authenticator
 
 Sends OTP to communication outbound
+Sends email after successful MFA, Example of configuration in Identity
+```yaml
+MFA_EMAIL_MESSAGE: "If you did not login to your account or if you have any questions, please contact us immediately at our contact number (123-456-7890).<br><br>Please do not reply directly to this email as we will not receive your message."
+MFA_EMAIL_SUBJECT: "Alert: Digital Banking OTP has been verified!"
+MFA_EMAIL_TEMPLATE: "sendMfaSuccessfulEmail.ftl"
+MFA_EMAIL_FOOTER: "&copy;2022 By Your Bank.<br>All rights reserved."
+MFA_EMAIL_ENABLED: "true"
+```
 
 ### Enrollment
 
