@@ -91,7 +91,7 @@
               <table class="email-body_inner" align="center" width="570" cellpadding="0" cellspacing="0" style="${emailBodyTableStyles}" bgcolor="#FFFFFF">
                 <tr>
                   <td class="content-cell" style="${baseTableDataPaddedStyles}">
-                    <p style="${baseParagraphStyles}" align="center"><img src="https://www.bankname.com/docs/email/logo.svg" width="244" height="48" alt="Digital Banking" /></p>
+                    <p style="${baseParagraphStyles}" align="center"><img src="https://www.westerracu.com/docs/email/logo.svg" width="244" height="48" alt="Digital Banking" /></p>
                     <p style="${baseParagraphStyles}" align="left">
                         <b> You have successfully logged in to your Digital Banking. </b>
                         <br/>
