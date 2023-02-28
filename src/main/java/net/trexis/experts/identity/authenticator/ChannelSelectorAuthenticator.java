@@ -89,15 +89,16 @@ public class ChannelSelectorAuthenticator implements Authenticator {
             return;
         }
 
-        if (otpChoiceList.size() == 1) {
-            log.debug("Only one mfa choice found, skipping selection");
-            OtpChoiceRepresentation otpChoice = otpChoiceList.stream()
-            .findFirst()
-            .orElseThrow();
-            context.getAuthenticationSession().setAuthNote(OTP_CHOICE_ADDRESS_ID, otpChoice.getAddressId());
-            context.success();
-            return;
-        }
+        // TODO: This behavior could be configurable. Leaving commented out in case it is desireable in the future.
+        // if (otpChoiceList.size() == 1) {
+        //     log.debug("Only one mfa choice found, skipping selection");
+        //     OtpChoiceRepresentation otpChoice = otpChoiceList.stream()
+        //     .findFirst()
+        //     .orElseThrow();
+        //     context.getAuthenticationSession().setAuthNote(OTP_CHOICE_ADDRESS_ID, otpChoice.getAddressId());
+        //     context.success();
+        //     return;
+        // }
 
         var otpChoiceListByChannel = otpChoiceList.stream().collect(Collectors.groupingBy(OtpChoiceRepresentation::getChannel));
         Response challenge = context.form()
