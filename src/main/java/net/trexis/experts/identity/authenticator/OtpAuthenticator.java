@@ -229,7 +229,8 @@ public class OtpAuthenticator implements Authenticator {
                         cacheOtpSendingRequest(context, otp);
                         boolean otpIsSent = sendOtp(otp, present, context);
                         if (!otpIsSent) {
-                            throw new OtpDeliveryException("Error occurred while sending OTP via communication service");
+                            log.warn("Otp sending failed");
+                            issueFailureChallenge(context, "Error sending OTP.","","");
                         }
                     } else {
                         log.infov("OTP sending not allowed, {0} seconds remaining from {1} second configured period",
