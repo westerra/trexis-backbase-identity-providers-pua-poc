@@ -44,6 +44,7 @@ import static java.time.Duration.between;
 import static java.time.ZonedDateTime.now;
 import static java.util.Map.Entry.comparingByKey;
 import static net.trexis.experts.identity.configuration.Constants.*;
+import static org.keycloak.authentication.AuthenticationFlowError.CLIENT_NOT_FOUND;
 import static org.keycloak.authentication.AuthenticationFlowError.INVALID_CREDENTIALS;
 
 public class OtpAuthenticator implements Authenticator {
@@ -159,6 +160,13 @@ public class OtpAuthenticator implements Authenticator {
         context.failureChallenge(INVALID_CREDENTIALS, challenge);
     }
 
+    private void challengeWithError(AuthenticationFlowContext context, String message) {
+        Response challenge = context.form()
+                .setError(message)
+                .createForm(MFA_OTP_TEMPLATE);
+        context.failureChallenge(INVALID_CREDENTIALS, challenge);
+    }
+
     protected Response challengeWithInfo(AuthenticationFlowContext context, String infoMessage, String channelNumber, String channelType) {
         return context.form()
             .setAttribute(CHANNEL_NUMBER,channelNumber)
@@ -229,8 +237,7 @@ public class OtpAuthenticator implements Authenticator {
                         cacheOtpSendingRequest(context, otp);
                         boolean otpIsSent = sendOtp(otp, present, context);
                         if (!otpIsSent) {
-                            log.warn("Otp sending failed");
-                            issueFailureChallenge(context, "Error sending OTP.","","");
+                            challengeWithError(context, "Error sending OTP.");
                         }
                     } else {
                         log.infov("OTP sending not allowed, {0} seconds remaining from {1} second configured period",
