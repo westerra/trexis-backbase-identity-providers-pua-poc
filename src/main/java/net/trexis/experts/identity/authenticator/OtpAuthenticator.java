@@ -233,9 +233,11 @@ public class OtpAuthenticator implements Authenticator {
                     long timeUntilResendAllowed = getTimeNextResendAllowed(context);
                     Optional<OtpChoice> selectedOtpChoiceOptional = findMatchingOtpChoice(context, otpChoiceAddressId);
                     if (timeUntilResendAllowed == 0L) {
+                        log.info("Sending OTP");
                         String otp = generateOtp(context);
                         cacheOtpSendingRequest(context, otp);
                         boolean otpIsSent = sendOtp(otp, present, context);
+                        log.info("otpIsSent : "+otpIsSent);
                         if (!otpIsSent) {
                             challengeWithError(context, "Error sending OTP.");
                         }
@@ -244,7 +246,7 @@ public class OtpAuthenticator implements Authenticator {
                                 timeUntilResendAllowed, totpConfig.getOtpResendPeriod());
                         issueFailureChallenge(context, "OTP sending not allowed, resume after " + timeUntilResendAllowed, maskChannelNumber(selectedOtpChoiceOptional.get().getAddress()),selectedOtpChoiceOptional.get().getChannel());
                     }
-                }, () -> issueFailureChallenge(context, "Error sending OTP.","",""));
+                }, () -> challengeWithError(context, "Error sending OTP."));
     }
 
     private boolean sendOtp(String otp, OtpChoice otpChoice, AuthenticationFlowContext authenticationFlowContext) {
