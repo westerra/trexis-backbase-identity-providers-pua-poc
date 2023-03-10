@@ -234,7 +234,6 @@ public class OtpAuthenticator implements Authenticator {
                     long timeUntilResendAllowed = getTimeNextResendAllowed(context);
                     Optional<OtpChoice> selectedOtpChoiceOptional = findMatchingOtpChoice(context, otpChoiceAddressId);
                     if (timeUntilResendAllowed == 0L) {
-                        log.info("Sending OTP");
                         String otp = generateOtp(context);
                         cacheOtpSendingRequest(context, otp);
                         boolean otpIsSent = sendOtp(otp, present, context);
