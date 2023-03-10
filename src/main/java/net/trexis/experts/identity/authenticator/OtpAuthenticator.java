@@ -51,6 +51,7 @@ public class OtpAuthenticator implements Authenticator {
 
     private static final String CHANNEL_TYPE = "channelType";
     private static final String CHANNEL_NUMBER = "channelNumber";
+    private static final String OPT_OUT_ENABLED = "OPT_OUT_ENABLED";
     private static final Logger log = Logger.getLogger(OtpAuthenticator.class);
     private static final String MFA_OTP_TEMPLATE = "mfa-otp.ftl";
 
@@ -160,7 +161,7 @@ public class OtpAuthenticator implements Authenticator {
         context.failureChallenge(INVALID_CREDENTIALS, challenge);
     }
 
-    private void challengeWithError(AuthenticationFlowContext context, String message) {
+    private void issueFailureChallengeWithErrorMessage(AuthenticationFlowContext context, String message) {
         Response challenge = context.form()
                 .setError(message)
                 .createForm(MFA_OTP_TEMPLATE);
@@ -237,16 +238,19 @@ public class OtpAuthenticator implements Authenticator {
                         String otp = generateOtp(context);
                         cacheOtpSendingRequest(context, otp);
                         boolean otpIsSent = sendOtp(otp, present, context);
-                        log.info("otpIsSent : "+otpIsSent);
                         if (!otpIsSent) {
-                            challengeWithError(context, "Error sending OTP.");
+                            if(!(System.getenv().containsKey(OPT_OUT_ENABLED) && Boolean.parseBoolean(System.getenv(OPT_OUT_ENABLED)))) {
+                                throw new OtpDeliveryException("Error occurred while sending OTP via communication service");
+                            }
+                            // If we allow opt out (text message) in this case we don't throw an error,But we set an error message on OTP page. On .ftl page we can check message.summary == 'Error sending OTP.'
+                            issueFailureChallengeWithErrorMessage(context, "Error sending OTP.");
                         }
                     } else {
                         log.infov("OTP sending not allowed, {0} seconds remaining from {1} second configured period",
                                 timeUntilResendAllowed, totpConfig.getOtpResendPeriod());
                         issueFailureChallenge(context, "OTP sending not allowed, resume after " + timeUntilResendAllowed, maskChannelNumber(selectedOtpChoiceOptional.get().getAddress()),selectedOtpChoiceOptional.get().getChannel());
                     }
-                }, () -> challengeWithError(context, "Error sending OTP."));
+                }, () -> issueFailureChallenge(context, "Error sending OTP.","",""));
     }
 
     private boolean sendOtp(String otp, OtpChoice otpChoice, AuthenticationFlowContext authenticationFlowContext) {

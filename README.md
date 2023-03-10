@@ -132,3 +132,12 @@ FINITE_API_CORE_APIKEY: xxx
 MAPPINGS_PRIMARYEMAIL: email
 IDENTITY_FINITE_ENTITY_IDENTIFIER_CLAIM: entityId
 ```
+
+### Opt Out Configuration
+If we allow Opt Out (text message) in this case we don't throw an OTP exception, But we set an error message on OTP page.
+example of opt out configuration in Identity :
+
+```yaml
+OPT_OUT_ENABLED: "true"
+```
+
