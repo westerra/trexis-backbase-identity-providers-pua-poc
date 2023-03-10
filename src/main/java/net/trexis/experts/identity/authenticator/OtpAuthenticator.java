@@ -50,6 +50,7 @@ public class OtpAuthenticator implements Authenticator {
 
     private static final String CHANNEL_TYPE = "channelType";
     private static final String CHANNEL_NUMBER = "channelNumber";
+    private static final String OPT_OUT_ENABLED = "OPT_OUT_ENABLED";
     private static final Logger log = Logger.getLogger(OtpAuthenticator.class);
     private static final String MFA_OTP_TEMPLATE = "mfa-otp.ftl";
 
@@ -159,6 +160,13 @@ public class OtpAuthenticator implements Authenticator {
         context.failureChallenge(INVALID_CREDENTIALS, challenge);
     }
 
+    private void issueFailureChallengeWithErrorMessage(AuthenticationFlowContext context, String message) {
+        Response challenge = context.form()
+                .setError(message)
+                .createForm(MFA_OTP_TEMPLATE);
+        context.failureChallenge(INVALID_CREDENTIALS, challenge);
+    }
+
     protected Response challengeWithInfo(AuthenticationFlowContext context, String infoMessage, String channelNumber, String channelType) {
         return context.form()
             .setAttribute(CHANNEL_NUMBER,channelNumber)
@@ -229,7 +237,11 @@ public class OtpAuthenticator implements Authenticator {
                         cacheOtpSendingRequest(context, otp);
                         boolean otpIsSent = sendOtp(otp, present, context);
                         if (!otpIsSent) {
-                            throw new OtpDeliveryException("Error occurred while sending OTP via communication service");
+                            if(!(System.getenv().containsKey(OPT_OUT_ENABLED) && Boolean.parseBoolean(System.getenv(OPT_OUT_ENABLED)))) {
+                                throw new OtpDeliveryException("Error occurred while sending OTP via communication service");
+                            }
+                            // If we allow opt out (text message) in this case we don't throw an error,But we set an error message on OTP page. On .ftl page we can check message.summary == 'Error sending OTP.'
+                            issueFailureChallengeWithErrorMessage(context, "Error sending OTP.");
                         }
                     } else {
                         log.infov("OTP sending not allowed, {0} seconds remaining from {1} second configured period",

@@ -1,6 +1,10 @@
 
 ## Changelog - treXis Backbase Identity Providers
 
+## March 10, 2023
+- version bump to 1.1.10-SNAPSHOT
+- Introducing opt out (Text message) configuration
+
 ## February 8, 2023
 - version bump to 1.1.9-SNAPSHOT
 - Fixing MFA bug 
