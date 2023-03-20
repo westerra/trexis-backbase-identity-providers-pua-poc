@@ -1,6 +1,10 @@
 
 ## Changelog - treXis Backbase Identity Providers
 
+## March 20, 2023
+- version bump to 1.1.11-SNAPSHOT
+- Introducing separate error handling on UI for invalid credentials & user disabled.
+
 ## March 10, 2023
 - version bump to 1.1.10-SNAPSHOT
 - Introducing opt out (Text message) configuration

@@ -6,7 +6,12 @@ import org.keycloak.authentication.AuthenticationFlowContext;
 import org.keycloak.authentication.authenticators.browser.UsernamePasswordForm;
 import org.keycloak.services.ServicesLogger;
 
+import javax.ws.rs.core.Response;
+
+import static org.keycloak.authentication.AuthenticationFlowError.INVALID_CREDENTIALS;
 import static org.keycloak.authentication.FlowStatus.SUCCESS;
+import static org.keycloak.events.Errors.INVALID_USER_CREDENTIALS;
+import static org.keycloak.events.Errors.USER_TEMPORARILY_DISABLED;
 import static org.keycloak.services.ServicesLogger.LOGGER;
 
 public class LoginIngestionUsernamePasswordForm extends UsernamePasswordForm {
@@ -20,7 +25,12 @@ public class LoginIngestionUsernamePasswordForm extends UsernamePasswordForm {
     @Override
     public void action(AuthenticationFlowContext context) {
         super.action(context);
-
+        if(SUCCESS != context.getStatus() && USER_TEMPORARILY_DISABLED.equalsIgnoreCase(context.getEvent().getEvent().getError())) {
+            // We are setting message.summary == 'user_temporarily_disabled' So we can handle user disabled case on UI, Else it will work as it is with default error case.
+            Response challenge = context.form().setError(USER_TEMPORARILY_DISABLED).createLoginUsernamePassword();
+            context.failure(org.keycloak.authentication.AuthenticationFlowError.USER_TEMPORARILY_DISABLED,challenge);
+            return;
+        }
         if (SUCCESS == context.getStatus()) {
             log.info("Authentication is successful");
             var user = context.getUser();
@@ -40,6 +50,11 @@ public class LoginIngestionUsernamePasswordForm extends UsernamePasswordForm {
                 }
                 context.success();
             }
+        } else {
+            // We are setting message.summary == 'invalid_user_credentials' So we can handle this particular case on UI, Else it will work as it is with default error case.
+            Response challenge = context.form().setError(INVALID_USER_CREDENTIALS).createLoginUsernamePassword();
+            context.failure(INVALID_CREDENTIALS,challenge);
+            return;
         }
     }
 }
