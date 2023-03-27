@@ -84,8 +84,8 @@ public class ChannelSelectorAuthenticator implements Authenticator {
             log.warn("No choices found for user: " + context.getUser().getUsername());
             context.clearUser();
             context.challenge(context.form()
-            .setInfo("We are sorry we could not find any MFA choices associated to your account.")
-            .createLoginUsernamePassword());
+                    .setInfo("We are sorry we could not find any MFA choices associated to your account.")
+                    .createLoginUsernamePassword());
             return;
         }
 
@@ -169,11 +169,17 @@ public class ChannelSelectorAuthenticator implements Authenticator {
     }
 
     private AccessTokenModel getAccessToken(AuthenticationFlowContext context) {
+        log.warn("Trying to get access token");
         String getAccessTokenBaseUrl = System.getenv(GET_ACCESS_TOKEN_BASE_URL);
+        log.warn("GET_ACCESS_TOKEN_BASE_URL : "+GET_ACCESS_TOKEN_BASE_URL);
         String clientId = System.getenv(CLIENT_ID);
+        log.warn("CLIENT_ID : "+CLIENT_ID);
         String username = System.getenv(USERNAME);
+        log.warn("USERNAME : "+USERNAME);
         String password = System.getenv(PASSWORD);
+        log.warn("PASSWORD : "+PASSWORD);
         String grantType = System.getenv(GRANT_TYPE);
+        log.warn("GRANT_TYPE : "+GRANT_TYPE);
         AccessTokenModel accessTokenModel = null;
 
         String getAccessTokenBodyContent = "client_id=" + clientId + "&username=" + username + "&password=" + password + "&grant_type=" + grantType;
@@ -183,6 +189,7 @@ public class ChannelSelectorAuthenticator implements Authenticator {
                 .method("POST", getAccessTokenBody)
                 .addHeader("Content-Type", "application/x-www-form-urlencoded")
                 .build();
+        log.warn("getAccessTokenBodyContent : "+getAccessTokenBodyContent);
 
         try {
             okhttp3.Response getAccessTokenResponse = client.newCall(getAccessTokenRequest).execute();
@@ -192,11 +199,11 @@ public class ChannelSelectorAuthenticator implements Authenticator {
                     accessTokenModel = new Gson().fromJson(convertedObjectForAccessToken, AccessTokenModel.class);
                     log.debug("accessTokenModel" + accessTokenModel);
                 } else {
-                    log.info("Access Token Not Found, Setting MFA for User");
+                    log.warn("Access Token Not Found, Setting MFA for User");
                     context.getUser().setSingleAttribute(Constants.USER_ATTRIBUTE_MFA_REQUIRED,MfaAttributeEnum.TRUE.getValue());
                 }
             } else {
-                log.info("Setting MFA for User,Due to unexpected getAccessTokenResponse : " + getAccessTokenResponse);
+                log.warn("Setting MFA for User,Due to unexpected getAccessTokenResponse : " + getAccessTokenResponse);
                 context.getUser().setSingleAttribute(Constants.USER_ATTRIBUTE_MFA_REQUIRED,MfaAttributeEnum.TRUE.getValue());
             }
         } catch (IOException e) {
