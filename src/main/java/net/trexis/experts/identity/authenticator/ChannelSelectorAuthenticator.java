@@ -17,10 +17,7 @@ import net.trexis.experts.identity.model.OtpChoiceRepresentation;
 import net.trexis.experts.identity.model.UserLoginDetails;
 import net.trexis.experts.identity.service.OtpChannelService;
 import net.trexis.experts.identity.util.ChannelSelectorUtil;
-import okhttp3.MediaType;
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.RequestBody;
+import okhttp3.*;
 
 import org.jboss.logging.Logger;
 import org.keycloak.authentication.AuthenticationFlowContext;
@@ -84,8 +81,8 @@ public class ChannelSelectorAuthenticator implements Authenticator {
             log.warn("No choices found for user: " + context.getUser().getUsername());
             context.clearUser();
             context.challenge(context.form()
-            .setInfo("We are sorry we could not find any MFA choices associated to your account.")
-            .createLoginUsernamePassword());
+                    .setInfo("We are sorry we could not find any MFA choices associated to your account.")
+                    .createLoginUsernamePassword());
             return;
         }
 
@@ -176,15 +173,18 @@ public class ChannelSelectorAuthenticator implements Authenticator {
         String grantType = System.getenv(GRANT_TYPE);
         AccessTokenModel accessTokenModel = null;
 
-        String getAccessTokenBodyContent = "client_id=" + clientId + "&username=" + username + "&password=" + password + "&grant_type=" + grantType;
-        RequestBody getAccessTokenBody = RequestBody.create(MediaType.parse("application/x-www-form-urlencoded"), getAccessTokenBodyContent);
-        Request getAccessTokenRequest = new Request.Builder()
-                .url(getAccessTokenBaseUrl)
-                .method("POST", getAccessTokenBody)
-                .addHeader("Content-Type", "application/x-www-form-urlencoded")
-                .build();
-
         try {
+            RequestBody getAccessTokenBodyContent = new FormBody.Builder()
+                    .add("client_id", clientId)
+                    .add("username", username)
+                    .add("password", password)
+                    .add("grant_type", grantType)
+                    .build();
+            Request getAccessTokenRequest = new Request.Builder()
+                    .url(getAccessTokenBaseUrl)
+                    .post(getAccessTokenBodyContent)
+                    .addHeader("Content-Type", "application/x-www-form-urlencoded")
+                    .build();
             okhttp3.Response getAccessTokenResponse = client.newCall(getAccessTokenRequest).execute();
             if (getAccessTokenResponse.isSuccessful() && getAccessTokenResponse.body() != null) {
                 String convertedObjectForAccessToken = getAccessTokenResponse.body().string();
@@ -192,11 +192,11 @@ public class ChannelSelectorAuthenticator implements Authenticator {
                     accessTokenModel = new Gson().fromJson(convertedObjectForAccessToken, AccessTokenModel.class);
                     log.debug("accessTokenModel" + accessTokenModel);
                 } else {
-                    log.info("Access Token Not Found, Setting MFA for User");
+                    log.warn("Access Token Not Found, Setting MFA for User");
                     context.getUser().setSingleAttribute(Constants.USER_ATTRIBUTE_MFA_REQUIRED,MfaAttributeEnum.TRUE.getValue());
                 }
             } else {
-                log.info("Setting MFA for User,Due to unexpected getAccessTokenResponse : " + getAccessTokenResponse);
+                log.warn("Setting MFA for User,Due to unexpected getAccessTokenResponse : " + getAccessTokenResponse);
                 context.getUser().setSingleAttribute(Constants.USER_ATTRIBUTE_MFA_REQUIRED,MfaAttributeEnum.TRUE.getValue());
             }
         } catch (IOException e) {

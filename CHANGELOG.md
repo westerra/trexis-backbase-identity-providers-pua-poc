@@ -1,6 +1,10 @@
 
 ## Changelog - treXis Backbase Identity Providers
 
+## March 28, 2023
+- version bump to 1.1.12-SNAPSHOT
+- Fixing urlEncode issue, For get access token call
+
 ## March 20, 2023
 - version bump to 1.1.11-SNAPSHOT
 - Introducing separate error handling on UI for invalid credentials & user disabled.
