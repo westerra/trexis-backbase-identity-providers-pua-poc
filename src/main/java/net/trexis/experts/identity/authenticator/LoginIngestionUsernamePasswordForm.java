@@ -45,13 +45,9 @@ public class LoginIngestionUsernamePasswordForm extends UsernamePasswordForm {
                 context.success();
             }
         } else if(USER_TEMPORARILY_DISABLED.equalsIgnoreCase(context.getEvent().getEvent().getError())) {
-            // We are setting message.summary == 'user_temporarily_disabled' So we can handle user disabled case on UI, Else it will work as it is with default error case.
+            // We are setting message.summary == 'user_temporarily_disabled' So we can handle temporary user disabled case on UI, Else it will work as it is with default error case.
             Response challenge = context.form().setError(USER_TEMPORARILY_DISABLED).createLoginUsernamePassword();
             context.failure(org.keycloak.authentication.AuthenticationFlowError.USER_TEMPORARILY_DISABLED,challenge);
-        } else {
-            // We are setting message.summary == 'invalid_user_credentials' So we can handle this particular case on UI, Else it will work as it is with default error case.
-            Response challenge = context.form().setError(INVALID_USER_CREDENTIALS).createLoginUsernamePassword();
-            context.failure(INVALID_CREDENTIALS,challenge);
         }
     }
 }
