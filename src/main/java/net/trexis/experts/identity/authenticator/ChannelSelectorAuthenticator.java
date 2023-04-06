@@ -17,11 +17,11 @@ import net.trexis.experts.identity.model.OtpChoiceRepresentation;
 import net.trexis.experts.identity.model.UserLoginDetails;
 import net.trexis.experts.identity.service.OtpChannelService;
 import net.trexis.experts.identity.util.ChannelSelectorUtil;
-
-import okhttp3.FormBody;
+import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.RequestBody;
+
 import org.jboss.logging.Logger;
 import org.keycloak.authentication.AuthenticationFlowContext;
 import org.keycloak.authentication.Authenticator;
@@ -29,6 +29,7 @@ import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.RealmModel;
 import org.keycloak.models.UserModel;
 import static net.trexis.experts.identity.configuration.Constants.*;
+import static org.keycloak.authentication.AuthenticationFlowError.INVALID_CREDENTIALS;
 
 public class ChannelSelectorAuthenticator implements Authenticator {
 
@@ -83,8 +84,8 @@ public class ChannelSelectorAuthenticator implements Authenticator {
             log.warn("No choices found for user: " + context.getUser().getUsername());
             context.clearUser();
             context.challenge(context.form()
-                    .setInfo("We are sorry we could not find any MFA choices associated to your account.")
-                    .createLoginUsernamePassword());
+            .setInfo("We are sorry we could not find any MFA choices associated to your account.")
+            .createLoginUsernamePassword());
             return;
         }
 
@@ -145,12 +146,12 @@ public class ChannelSelectorAuthenticator implements Authenticator {
                 log.warn("User Login Details Not Found, Setting MFA for User");
                 return false;
             }
-            boolean isLoginValid = false;
+            boolean isLoginValid = true;
             //checking for last 4 ip address
             var lastLoginCheckMaxIndex = userLoginDetails.length >= lastIpAddressCheck ? lastIpAddressCheck-1 : userLoginDetails.length - 1;
             for (int i = 0; i <= lastLoginCheckMaxIndex; i++) {
-                if (userLoginDetails[i].getIpAddress().equals(currentLoginIpAddress)) {
-                    isLoginValid = true;
+                if (!userLoginDetails[i].getIpAddress().equals(currentLoginIpAddress)) {
+                    isLoginValid = false;
                     break;
                 }
             }
@@ -175,18 +176,15 @@ public class ChannelSelectorAuthenticator implements Authenticator {
         String grantType = System.getenv(GRANT_TYPE);
         AccessTokenModel accessTokenModel = null;
 
+        String getAccessTokenBodyContent = "client_id=" + clientId + "&username=" + username + "&password=" + password + "&grant_type=" + grantType;
+        RequestBody getAccessTokenBody = RequestBody.create(MediaType.parse("application/x-www-form-urlencoded"), getAccessTokenBodyContent);
+        Request getAccessTokenRequest = new Request.Builder()
+                .url(getAccessTokenBaseUrl)
+                .method("POST", getAccessTokenBody)
+                .addHeader("Content-Type", "application/x-www-form-urlencoded")
+                .build();
+
         try {
-            RequestBody getAccessTokenBodyContent = new FormBody.Builder()
-                    .add("client_id", clientId)
-                    .add("username", username)
-                    .add("password", password)
-                    .add("grant_type", grantType)
-                    .build();
-            Request getAccessTokenRequest = new Request.Builder()
-                    .url(getAccessTokenBaseUrl)
-                    .post(getAccessTokenBodyContent)
-                    .addHeader("Content-Type", "application/x-www-form-urlencoded")
-                    .build();
             okhttp3.Response getAccessTokenResponse = client.newCall(getAccessTokenRequest).execute();
             if (getAccessTokenResponse.isSuccessful() && getAccessTokenResponse.body() != null) {
                 String convertedObjectForAccessToken = getAccessTokenResponse.body().string();
@@ -194,11 +192,11 @@ public class ChannelSelectorAuthenticator implements Authenticator {
                     accessTokenModel = new Gson().fromJson(convertedObjectForAccessToken, AccessTokenModel.class);
                     log.debug("accessTokenModel" + accessTokenModel);
                 } else {
-                    log.warn("Access Token Not Found, Setting MFA for User");
+                    log.info("Access Token Not Found, Setting MFA for User");
                     context.getUser().setSingleAttribute(Constants.USER_ATTRIBUTE_MFA_REQUIRED,MfaAttributeEnum.TRUE.getValue());
                 }
             } else {
-                log.warn("Setting MFA for User,Due to unexpected getAccessTokenResponse : " + getAccessTokenResponse);
+                log.info("Setting MFA for User,Due to unexpected getAccessTokenResponse : " + getAccessTokenResponse);
                 context.getUser().setSingleAttribute(Constants.USER_ATTRIBUTE_MFA_REQUIRED,MfaAttributeEnum.TRUE.getValue());
             }
         } catch (IOException e) {
