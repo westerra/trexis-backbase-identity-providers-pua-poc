@@ -5,17 +5,21 @@
 
     <groupId>net.trexis.experts</groupId>
     <artifactId>trexis-backbase-identity-providers</artifactId>
-    <version>1.1.12-SNAPSHOT</version>
+    <version>1.1.13-SNAPSHOT</version>
 
     <properties>
         <java.version>11</java.version>
         <maven.compiler.target>${java.version}</maven.compiler.target>
         <maven.compiler.source>${java.version</maven.compiler.source>
 
-        <identity-bom.version>2022.01-LTS</identity-bom.version>
+        <!-- treXis -->
+        <trexis-bom.version>1.0.2-SNAPSHOT</trexis-bom.version>
+
+        <!-- Backbase -->
+        <identity-bom.version>2022.08-LTS</identity-bom.version>
 
         <jboss.logging.version>3.4.1.Final</jboss.logging.version>
-        <lombok.version>1.18.22</lombok.version>
+        <lombok.version>1.18.24</lombok.version>
         <org-junit-jupiter.version>5.9.0-M1</org-junit-jupiter.version>
 
         <!-- Code coverage -->
@@ -36,7 +40,7 @@
             <dependency>
                 <groupId>net.trexis.experts</groupId>
                 <artifactId>experts-bom</artifactId>
-                <version>1.0.0.LTS-SNAPSHOT</version>
+                <version>${trexis-bom.version}</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
