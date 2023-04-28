@@ -8,7 +8,7 @@
     <version>1.1.13-SNAPSHOT</version>
 
     <properties>
-        <java.version>11</java.version>
+        <java.version>17</java.version>
         <maven.compiler.target>${java.version}</maven.compiler.target>
         <maven.compiler.source>${java.version</maven.compiler.source>
 
@@ -16,7 +16,7 @@
         <trexis-bom.version>1.0.2-SNAPSHOT</trexis-bom.version>
 
         <!-- Backbase -->
-        <identity-bom.version>2022.08-LTS</identity-bom.version>
+        <identity-bom.version>2023.02.18-LTS</identity-bom.version>
 
         <jboss.logging.version>3.4.1.Final</jboss.logging.version>
         <lombok.version>1.18.24</lombok.version>
