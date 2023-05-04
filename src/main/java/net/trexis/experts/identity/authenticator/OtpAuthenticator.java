@@ -8,7 +8,7 @@ import com.backbase.identity.authenticators.otp.model.OtpChoice;
 import com.backbase.identity.authenticators.otp.model.PostBatchesRequestBody;
 import com.backbase.identity.m10y.models.Tenant;
 import com.backbase.identity.m10y.providers.TenantResolverProvider;
-import com.backbase.identity.util.CacheSupplier;
+import com.backbase.identity.spi.store.OtpStoreProvider;
 import com.backbase.identity.util.IdentityTotpUtil;
 import com.backbase.identity.util.LimitedActionMap;
 import java.time.ZonedDateTime;
@@ -60,7 +60,7 @@ public class OtpAuthenticator implements Authenticator {
     private final SecretProvider secretProvider;
     private final CommunicationService communicationService;
     private final OtpTemplateProviderImplFactory otpTemplateProviderImplFactory;
-    private final CacheSupplier cacheSupplier;
+    private final OtpStoreProvider otpStoreProvider;
     private final MfaEmailConfiguration mfaEmailConfiguration;
 
     private TimeBasedOTP timeBasedOtp;
@@ -70,13 +70,13 @@ public class OtpAuthenticator implements Authenticator {
     OtpAuthenticator(KeycloakSession session, List<ProviderConfigProperty> configProperties,
             OtpChannelService otpChannelService, SecretProvider secretProvider,
             CommunicationService communicationService, OtpTemplateProviderImplFactory otpTemplateProviderImplFactory,
-            CacheSupplier cacheSupplier,MfaEmailConfiguration mfaEmailConfiguration) {
+            OtpStoreProvider otpStoreProvider,MfaEmailConfiguration mfaEmailConfiguration) {
         this.session = session;
         this.otpChannelService = otpChannelService;
         this.secretProvider = secretProvider;
         this.communicationService = communicationService;
         this.otpTemplateProviderImplFactory = otpTemplateProviderImplFactory;
-        this.cacheSupplier = cacheSupplier;
+        this.otpStoreProvider = otpStoreProvider;
         this.mfaEmailConfiguration = mfaEmailConfiguration;
 
         //TODO: Resent limit testing
@@ -231,7 +231,7 @@ public class OtpAuthenticator implements Authenticator {
     private void verifyOtpMethodAndSendOtp(AuthenticationFlowContext context, String otpChoiceAddressId) {
         findMatchingOtpChoice(context, otpChoiceAddressId)
                 .ifPresentOrElse(present -> {
-                    long timeUntilResendAllowed = getTimeNextResendAllowed(context);
+                    long timeUntilResendAllowed = otpStoreProvider.getTimeUntilResendAllowed(context.getUser(), context.getExecution(), totpConfig.getOtpResendPeriod());
                     Optional<OtpChoice> selectedOtpChoiceOptional = findMatchingOtpChoice(context, otpChoiceAddressId);
                     if (timeUntilResendAllowed == 0L) {
                         String otp = generateOtp(context);
@@ -327,28 +327,6 @@ public class OtpAuthenticator implements Authenticator {
         return otpChannelService.getAvailableOtpChoices(authenticationFlowContext).stream()
                 .filter(otpChoice -> otpChoiceAddressId.equals(otpChoice.getAddressId()))
                 .findFirst();
-    }
-
-    private long getTimeNextResendAllowed(AuthenticationFlowContext context) {
-        if (unlimitedResendEnabled()) {
-            log.debug("Unlimited otp sending enabled");
-            return 0L;
-        }
-
-        this.infinispanCache = this.cacheSupplier.getOtpAuthenticatorCache(this.session);
-        var userAttemptCache = this.infinispanCache.get(context.getUser().getId());
-
-        if (userAttemptCache == null || userAttemptCache.getCacheMap() == null ||
-                userAttemptCache.getCacheMap().entrySet().size() < totpConfig.getOtpResendLimit()) {
-            return 0L;
-        }
-        ZonedDateTime resendTime = userAttemptCache.getCacheMap().entrySet().stream()
-                .sorted(comparingByKey())
-                .map(Map.Entry::getKey)
-                .findFirst()
-                .orElseThrow(() -> new OtpDeliveryException("Unable to retrieve existing otp attempt from cache"))
-                .plusSeconds(totpConfig.getOtpResendPeriod());
-        return between(now(), resendTime).getSeconds();
     }
 
     private void cacheOtpSendingRequest(AuthenticationFlowContext context, String otp) {
