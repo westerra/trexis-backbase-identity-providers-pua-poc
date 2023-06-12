@@ -40,7 +40,7 @@ public class OtpChannelService {
     while (otpChannelIter.hasNext()) {
       OtpChannel otpChannel = otpChannelIter.next();
       log.debugv("OTP Channel: " + otpChannel.getChannel());
-      Iterator<String> channelIdentityAttributesIter = otpChannel.getIdentityAttributes().keySet().iterator();
+      Iterator<String> channelIdentityAttributesIter = otpChannel.getIdentityAttributes().values().iterator();
 
       while (channelIdentityAttributesIter.hasNext()) {
         String attribute = channelIdentityAttributesIter.next();
