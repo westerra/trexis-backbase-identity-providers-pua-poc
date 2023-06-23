@@ -68,7 +68,7 @@ public class UpdateProfileListenerProvider implements EventListenerProvider {
                             .value(updatedEmail);
 
                     var existingEntityProfile = entityApi.getEntityProfile(entityId, null, false, false, X_TRACE_ID, null);
-
+                    log.warn("existingEntityProfile : "+ existingEntityProfile);
                     var updatedContactPoints = existingEntityProfile.getContactPoints().stream()
                                     .map(existingContactPoint -> {
                                         if (existingContactPoint.getType() == EMAIL && primaryEmailName.equalsIgnoreCase(existingContactPoint.getName())) {
@@ -78,7 +78,7 @@ public class UpdateProfileListenerProvider implements EventListenerProvider {
                                     })
                                     .collect(Collectors.toList());
                     existingEntityProfile.setContactPoints(updatedContactPoints);
-
+                    log.warn("saving new entity profile for entityId : "+ entityId+ " entityProfile : " + existingEntityProfile);
                     entityApi.putEntityProfile(entityId, existingEntityProfile, X_TRACE_ID, null, false, false);
                     log.warn("successfully saved email to core");
                 });
