@@ -47,7 +47,7 @@ public class UpdateProfileListenerProvider implements EventListenerProvider {
         }
 
         if (UPDATE_PROFILE == event.getType() && isNotBlank(event.getUserId()) &&
-                event.getDetails().get(PREVIOUS_EMAIL)!= null && !event.getDetails().get(PREVIOUS_EMAIL).equalsIgnoreCase(event.getDetails().get(PREVIOUS_EMAIL))) {
+                event.getDetails().get(PREVIOUS_EMAIL)!= null && !event.getDetails().get(PREVIOUS_EMAIL).equalsIgnoreCase(event.getDetails().get(UPDATED_EMAIL))) {
             persistEmailToCore(event);
         }
     }
