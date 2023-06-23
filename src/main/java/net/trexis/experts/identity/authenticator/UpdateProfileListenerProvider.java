@@ -36,6 +36,15 @@ public class UpdateProfileListenerProvider implements EventListenerProvider {
     }
 
     public void onEvent(Event event) {
+        log.warn("Updating email event: " + event);
+        log.warn("Updating email event: " + event.getType());
+        log.warn("Updating email event: " + event.getUserId());
+
+        if(isNotBlank(event.getUserId())) {
+            log.warn("Updating email event: " +event.getDetails().get(PREVIOUS_EMAIL));
+            log.warn("Updating email event: " +event.getDetails().get(UPDATED_EMAIL));
+        }
+
         if (UPDATE_EMAIL == event.getType() && isNotBlank(event.getUserId())) {
             persistEmailToCore(event);
         }
@@ -44,7 +53,7 @@ public class UpdateProfileListenerProvider implements EventListenerProvider {
     private void persistEmailToCore(Event event) {
         var previousEmail = event.getDetails().get(PREVIOUS_EMAIL);
         var updatedEmail = event.getDetails().get(UPDATED_EMAIL);
-        log.debug("Updating email: " + previousEmail + " -> " + updatedEmail);
+        log.warn("Updating email: " + previousEmail + " -> " + updatedEmail);
 
         RealmModel realm = keycloakSession.realms().getRealm(event.getRealmId());
         var user = keycloakSession.users().getUserById(event.getUserId(), realm);
@@ -69,7 +78,7 @@ public class UpdateProfileListenerProvider implements EventListenerProvider {
                     existingEntityProfile.setContactPoints(updatedContactPoints);
 
                     entityApi.putEntityProfile(entityId, existingEntityProfile, X_TRACE_ID, null, false, false);
-                    log.info("successfully saved email to core");
+                    log.warn("successfully saved email to core");
                 });
     }
 
