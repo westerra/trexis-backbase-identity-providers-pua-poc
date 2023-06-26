@@ -55,8 +55,12 @@ public class UpdateProfileListenerProvider implements EventListenerProvider {
     private void persistEmailToCore(Event event) {
         var previousEmail = event.getDetails().get(PREVIOUS_EMAIL);
         var updatedEmail = event.getDetails().get(UPDATED_EMAIL);
+        log.warn("Updating email event: " +event.getDetails());
         log.warn("Updating email: " + previousEmail + " -> " + updatedEmail);
 
+        for (String key: event.getDetails().keySet()) {
+            log.warn("Updating email: " + "key " + " -> " + key + " value -> "+ event.getDetails().get(key));
+        }
         RealmModel realm = keycloakSession.realms().getRealm(event.getRealmId());
         var user = keycloakSession.users().getUserById(event.getUserId(), realm);
         user.getAttributes().get(entityIdentifierClaim).stream()
