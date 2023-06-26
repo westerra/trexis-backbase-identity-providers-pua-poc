@@ -13,8 +13,7 @@ import org.keycloak.models.RealmModel;
 
 import static com.finite.api.model.ContactPoint.TypeEnum.EMAIL;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
-import static org.keycloak.events.Details.PREVIOUS_EMAIL;
-import static org.keycloak.events.Details.UPDATED_EMAIL;
+import static org.keycloak.events.Details.*;
 import static org.keycloak.events.EventType.UPDATE_EMAIL;
 import static org.keycloak.events.EventType.UPDATE_PROFILE;
 
@@ -84,6 +83,8 @@ public class UpdateProfileListenerProvider implements EventListenerProvider {
                     existingEntityProfile.setContactPoints(updatedContactPoints);
                     log.warn("saving new entity profile for entityId : "+ entityId+ " entityProfile : " + existingEntityProfile);
                     entityApi.putEntityProfile(entityId, existingEntityProfile, X_TRACE_ID, null, false, false);
+                    event.getDetails().put(UPDATED_FIRST_NAME,existingEntityProfile.getFirstname());
+                    event.getDetails().put(UPDATED_LAST_NAME,existingEntityProfile.getLastname());
                     log.warn("successfully saved email to core");
                 });
     }
