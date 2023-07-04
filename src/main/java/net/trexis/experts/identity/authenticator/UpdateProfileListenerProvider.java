@@ -16,6 +16,7 @@ import static org.apache.commons.lang3.StringUtils.isNotBlank;
 import static org.keycloak.events.Details.PREVIOUS_EMAIL;
 import static org.keycloak.events.Details.UPDATED_EMAIL;
 import static org.keycloak.events.EventType.UPDATE_EMAIL;
+import static org.keycloak.events.EventType.UPDATE_PROFILE;
 
 public class UpdateProfileListenerProvider implements EventListenerProvider {
 
@@ -36,7 +37,9 @@ public class UpdateProfileListenerProvider implements EventListenerProvider {
     }
 
     public void onEvent(Event event) {
-        if (UPDATE_EMAIL == event.getType() && isNotBlank(event.getUserId())) {
+        if ((UPDATE_EMAIL == event.getType() && isNotBlank(event.getUserId())) ||
+                (UPDATE_PROFILE == event.getType() && isNotBlank(event.getUserId()) &&
+                        event.getDetails().get(PREVIOUS_EMAIL)!= null && !event.getDetails().get(PREVIOUS_EMAIL).equalsIgnoreCase(event.getDetails().get(PREVIOUS_EMAIL)))) {
             persistEmailToCore(event);
         }
     }
