@@ -2,7 +2,6 @@ package net.trexis.experts.identity.authenticator;
 
 import com.finite.api.EntityApi;
 import com.finite.api.model.ContactPoint;
-import com.finite.api.model.EntityProfile;
 import java.util.stream.Collectors;
 import org.jboss.logging.Logger;
 import org.keycloak.events.Event;
@@ -16,7 +15,6 @@ import static org.apache.commons.lang3.StringUtils.isNotBlank;
 import static org.keycloak.events.Details.PREVIOUS_EMAIL;
 import static org.keycloak.events.Details.UPDATED_EMAIL;
 import static org.keycloak.events.EventType.UPDATE_EMAIL;
-import static org.keycloak.events.EventType.UPDATE_PROFILE;
 
 public class UpdateProfileListenerProvider implements EventListenerProvider {
 
@@ -37,9 +35,7 @@ public class UpdateProfileListenerProvider implements EventListenerProvider {
     }
 
     public void onEvent(Event event) {
-        if ((UPDATE_EMAIL == event.getType() && isNotBlank(event.getUserId())) ||
-                (UPDATE_PROFILE == event.getType() && isNotBlank(event.getUserId()) &&
-                        event.getDetails().get(PREVIOUS_EMAIL)!= null && !event.getDetails().get(PREVIOUS_EMAIL).equalsIgnoreCase(event.getDetails().get(UPDATED_EMAIL)))) {
+        if (UPDATE_EMAIL == event.getType() && isNotBlank(event.getUserId())) {
             persistEmailToCore(event);
         }
     }
