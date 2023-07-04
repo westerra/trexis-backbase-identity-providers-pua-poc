@@ -1,6 +1,10 @@
 
 ## Changelog - treXis Backbase Identity Providers
 
+## July 04, 2023
+- version bump to 1.2.1-SNAPSHOT
+- Added UPDATE_PROFILE check while sending email update to finite cause with upgrade we only have an UPDATE_PROFILE event while changing email. 
+
 ## March 28, 2023
 - version bump to 1.1.12-SNAPSHOT
 - Fixing urlEncode issue, For get access token call
