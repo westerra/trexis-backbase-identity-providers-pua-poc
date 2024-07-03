@@ -12,10 +12,7 @@ import com.backbase.identity.spi.store.OtpStoreProvider;
 import com.backbase.identity.util.IdentityTotpUtil;
 import com.backbase.identity.util.LimitedActionMap;
 import java.time.ZonedDateTime;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.HashMap;
+import java.util.*;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.io.Writer;
@@ -38,6 +35,7 @@ import org.keycloak.models.RealmModel;
 import org.keycloak.models.UserModel;
 import org.keycloak.models.utils.TimeBasedOTP;
 import org.keycloak.provider.ProviderConfigProperty;
+import org.keycloak.sessions.AuthenticationSessionModel;
 
 import static java.lang.Integer.parseInt;
 import static java.time.Duration.between;
@@ -62,6 +60,10 @@ public class OtpAuthenticator implements Authenticator {
     private final OtpTemplateProviderImplFactory otpTemplateProviderImplFactory;
     private final OtpStoreProvider otpStoreProvider;
     private final MfaEmailConfiguration mfaEmailConfiguration;
+    private static final List<String> WHITELISTED_IPS = Arrays.asList(
+            "34.215.116.35", "34.215.234.87", "35.165.2.59", "34.214.37.223",
+            "34.210.53.158", "52.89.52.36", "52.35.98.213", "52.36.72.121", "64.226.133.180"
+    );
 
     private TimeBasedOTP timeBasedOtp;
     private org.infinispan.Cache<String, LimitedActionMap> infinispanCache;
@@ -94,6 +96,19 @@ public class OtpAuthenticator implements Authenticator {
     @Override
     public void authenticate(AuthenticationFlowContext context) {
         log.warn("context config: " + context.getAuthenticatorConfig());
+
+        UserModel user = context.getUser();
+        AuthenticationSessionModel authSession = context.getAuthenticationSession();
+        String clientIP = context.getConnection().getRemoteAddr();
+
+        log.warn("Client IP: " + clientIP);
+
+        if (isIPWhitelisted(clientIP)) {
+            log.debugv("IP {} is whitelisted; skipping MFA for user {}", clientIP, user.getUsername());
+            context.success();
+            return;
+        }
+
         if (mfaIsRequired(context.getUser())) {
             configureTotp(context);
             log.debugv("User {0} is required to do MFA", context.getUser().getUsername());
@@ -111,6 +126,10 @@ public class OtpAuthenticator implements Authenticator {
             log.debugv("User {0} is NOT required to do MFA", context.getUser().getUsername());
             context.success();
         }
+    }
+
+    private boolean isIPWhitelisted(String ip) {
+        return WHITELISTED_IPS.contains(ip);
     }
 
     private String maskChannelNumber(String channelNumber) {
