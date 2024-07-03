@@ -1,5 +1,6 @@
 package net.trexis.experts.identity.authenticator;
 
+import org.jboss.logging.Logger;
 import org.keycloak.authentication.AuthenticationFlowContext;
 import org.keycloak.authentication.AuthenticationFlowError;
 import org.keycloak.authentication.Authenticator;
@@ -9,11 +10,16 @@ public class IPWhitelistAuthenticator implements Authenticator {
 
     private static final String IP_WHITELISTED_NOTE = "ip-whitelisted";
 
+    private static final Logger log = Logger.getLogger(IPWhitelistAuthenticator.class);
+
     @Override
     public void authenticate(AuthenticationFlowContext context) {
         String clientIP = context.getConnection().getRemoteAddr();
+        log.debug("Client IP: " + clientIP);
+
         if (isIPWhitelisted(clientIP)) {
             context.getAuthenticationSession().setAuthNote(IP_WHITELISTED_NOTE, "true");
+            log.debug(" Authentication successful ::: " + clientIP);
             context.success();
         } else {
             context.getAuthenticationSession().removeAuthNote(IP_WHITELISTED_NOTE);
