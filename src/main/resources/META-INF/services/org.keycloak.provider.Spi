@@ -1,2 +1,3 @@
 net.trexis.experts.identity.spi.IngestionServiceSpi
 net.trexis.experts.identity.spi.EnrollmentServiceSpi
+net.trexis.experts.identity.spi.IPWhitelistSpi
