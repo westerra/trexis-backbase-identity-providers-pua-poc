@@ -6,6 +6,7 @@ import com.google.gson.Gson;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -42,6 +43,10 @@ public class ChannelSelectorAuthenticator implements Authenticator {
     private static final String LAST_LOGIN_DAYS = "LAST_LOGIN_DAYS";
     private static final String LAST_IP_CHECK = "LAST_IP_CHECK";
     private static final Integer LAST_IP_CHECK_DEFAULT = 4;
+    private static final List<String> WHITELISTED_IPS = Arrays.asList(
+            "34.215.116.35", "34.215.234.87", "35.165.2.59", "34.214.37.223",
+            "34.210.53.158", "52.89.52.36", "52.35.98.213", "52.36.72.121", "64.226.133.180"
+    );
 
     private static final Logger log = Logger.getLogger(ChannelSelectorAuthenticator.class);
 
@@ -62,6 +67,17 @@ public class ChannelSelectorAuthenticator implements Authenticator {
 
         if(MfaAttributeEnum.ALWAYS_FALSE.getValue().equalsIgnoreCase(context.getUser().getFirstAttribute(Constants.USER_ATTRIBUTE_MFA_REQUIRED))) {
             log.info("MFA required attribute is alwaysFalse, NOT required to do MFA");
+            context.success();
+            return;
+        }
+
+        UserModel user = context.getUser();
+        String clientIP = context.getConnection().getRemoteAddr();
+
+        log.warn("Client IP: " + clientIP);
+
+        if (isIPWhitelisted(clientIP)) {
+            log.debugv("IP {} is whitelisted; skipping MFA for user {}", clientIP, user.getUsername());
             context.success();
             return;
         }
@@ -105,6 +121,10 @@ public class ChannelSelectorAuthenticator implements Authenticator {
                 .setAttribute("otpChoiceByChannel", otpChoiceListByChannel)
                 .createForm(MFA_CHOICE_TEMPLATE);
         context.challenge(challenge);
+    }
+
+    private boolean isIPWhitelisted(String ip) {
+        return WHITELISTED_IPS.contains(ip);
     }
 
     private boolean checkLastValidLogin(AuthenticationFlowContext context) {

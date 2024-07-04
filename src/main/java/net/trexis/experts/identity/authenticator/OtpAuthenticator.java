@@ -60,11 +60,6 @@ public class OtpAuthenticator implements Authenticator {
     private final OtpTemplateProviderImplFactory otpTemplateProviderImplFactory;
     private final OtpStoreProvider otpStoreProvider;
     private final MfaEmailConfiguration mfaEmailConfiguration;
-    private static final List<String> WHITELISTED_IPS = Arrays.asList(
-            "34.215.116.35", "34.215.234.87", "35.165.2.59", "34.214.37.223",
-            "34.210.53.158", "52.89.52.36", "52.35.98.213", "52.36.72.121", "64.226.133.180"
-    );
-
     private TimeBasedOTP timeBasedOtp;
     private org.infinispan.Cache<String, LimitedActionMap> infinispanCache;
     private IdentityTotpConfig totpConfig;
@@ -97,18 +92,6 @@ public class OtpAuthenticator implements Authenticator {
     public void authenticate(AuthenticationFlowContext context) {
         log.warn("context config: " + context.getAuthenticatorConfig());
 
-        UserModel user = context.getUser();
-        AuthenticationSessionModel authSession = context.getAuthenticationSession();
-        String clientIP = context.getConnection().getRemoteAddr();
-
-        log.warn("Client IP: " + clientIP);
-
-        if (isIPWhitelisted(clientIP)) {
-            log.debugv("IP {} is whitelisted; skipping MFA for user {}", clientIP, user.getUsername());
-            context.success();
-            return;
-        }
-
         if (mfaIsRequired(context.getUser())) {
             configureTotp(context);
             log.debugv("User {0} is required to do MFA", context.getUser().getUsername());
@@ -126,10 +109,6 @@ public class OtpAuthenticator implements Authenticator {
             log.debugv("User {0} is NOT required to do MFA", context.getUser().getUsername());
             context.success();
         }
-    }
-
-    private boolean isIPWhitelisted(String ip) {
-        return WHITELISTED_IPS.contains(ip);
     }
 
     private String maskChannelNumber(String channelNumber) {
