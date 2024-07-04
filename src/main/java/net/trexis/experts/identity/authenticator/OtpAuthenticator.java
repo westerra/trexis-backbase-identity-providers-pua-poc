@@ -27,6 +27,7 @@ import net.trexis.experts.identity.model.MfaAttributeEnum;
 import net.trexis.experts.identity.service.OtpChannelService;
 import net.trexis.experts.identity.model.MfaEmailConfiguration;
 
+import net.trexis.experts.identity.util.ChannelSelectorUtil;
 import org.jboss.logging.Logger;
 import org.keycloak.authentication.AuthenticationFlowContext;
 import org.keycloak.authentication.Authenticator;
@@ -91,6 +92,13 @@ public class OtpAuthenticator implements Authenticator {
     @Override
     public void authenticate(AuthenticationFlowContext context) {
         log.warn("context config: " + context.getAuthenticatorConfig());
+
+        String clientIP = context.getConnection().getRemoteAddr();
+        if (ChannelSelectorUtil.isIpWhitelisted(clientIP)) {
+            log.debugv("IP {} is whitelisted; skipping MFA for user {}", clientIP, context.getUser().getUsername());
+            context.success();
+            return;
+        }
 
         if (mfaIsRequired(context.getUser())) {
             configureTotp(context);
