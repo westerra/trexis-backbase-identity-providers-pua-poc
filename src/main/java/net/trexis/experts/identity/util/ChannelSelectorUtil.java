@@ -11,7 +11,7 @@ public class ChannelSelectorUtil {
     private static final List<String> WHITELISTED_IPS = Arrays.asList(
             "34.215.116.35", "34.215.234.87", "35.165.2.59",
             "34.214.37.223", "34.210.53.158", "52.89.52.36",
-            "52.35.98.213", "52.36.72.121", "64.226.133.180"
+            "52.35.98.213", "52.36.72.121"
     );
 
     public static String maskPhoneNumber(String tel) {
