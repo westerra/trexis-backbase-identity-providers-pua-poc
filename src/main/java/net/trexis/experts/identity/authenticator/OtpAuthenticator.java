@@ -11,7 +11,7 @@ import com.backbase.identity.m10y.providers.TenantResolverProvider;
 import com.backbase.identity.spi.store.OtpStoreProvider;
 import com.backbase.identity.util.IdentityTotpUtil;
 import com.backbase.identity.util.LimitedActionMap;
-import java.time.ZonedDateTime;
+
 import java.util.*;
 import java.io.IOException;
 import java.io.StringWriter;
@@ -31,19 +31,17 @@ import net.trexis.experts.identity.util.ChannelSelectorUtil;
 import org.jboss.logging.Logger;
 import org.keycloak.authentication.AuthenticationFlowContext;
 import org.keycloak.authentication.Authenticator;
+import org.keycloak.models.ClientModel;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.RealmModel;
 import org.keycloak.models.UserModel;
 import org.keycloak.models.utils.TimeBasedOTP;
 import org.keycloak.provider.ProviderConfigProperty;
-import org.keycloak.sessions.AuthenticationSessionModel;
 
 import static java.lang.Integer.parseInt;
-import static java.time.Duration.between;
 import static java.time.ZonedDateTime.now;
 import static java.util.Map.Entry.comparingByKey;
 import static net.trexis.experts.identity.configuration.Constants.*;
-import static org.keycloak.authentication.AuthenticationFlowError.CLIENT_NOT_FOUND;
 import static org.keycloak.authentication.AuthenticationFlowError.INVALID_CREDENTIALS;
 
 public class OtpAuthenticator implements Authenticator {
@@ -93,9 +91,9 @@ public class OtpAuthenticator implements Authenticator {
     public void authenticate(AuthenticationFlowContext context) {
         log.warn("context config: " + context.getAuthenticatorConfig());
 
-        String clientIP = context.getConnection().getRemoteAddr();
-        if (ChannelSelectorUtil.isIpWhitelisted(clientIP)) {
-            log.debugv("IP {} is whitelisted; skipping MFA for user {}", clientIP, context.getUser().getUsername());
+        // by pass the MFA if ip white listed
+        if (ChannelSelectorUtil.byPassMFAIfIpWhiteListed(context)) {
+            log.debugv("IP {} is whitelisted; skipping MFA for user {}", context.getConnection().getRemoteAddr(), context.getUser().getUsername());
             context.success();
             return;
         }
