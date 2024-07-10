@@ -1,6 +1,7 @@
 package net.trexis.experts.identity.util;
 
 import lombok.experimental.UtilityClass;
+import org.jboss.logging.Logger;
 import org.keycloak.authentication.AuthenticationFlowContext;
 import org.keycloak.models.ClientModel;
 
@@ -11,6 +12,8 @@ import java.util.List;
 public class ChannelSelectorUtil {
 
     private static final boolean USE_ATTRIBUTE_WHITELIST = true; // Set this based on your configuration needs
+
+    private static final Logger log = Logger.getLogger(ChannelSelectorUtil.class);
 
     // Hardcoded whitelist IPs for fallback or default use
     private static final List<String> HARDCODED_WHITELISTED_IPS = Arrays.asList(
@@ -32,6 +35,8 @@ public class ChannelSelectorUtil {
         String clientIP = context.getConnection().getRemoteAddr();
 
         List<String> whitelistedIPs = getWhitelistedIPs(client);
+
+        log.warnv("whitelisted ip {0} ",whitelistedIPs);
 
         // Check if the client IP is in the whitelisted IPs
         return whitelistedIPs.contains(clientIP);
