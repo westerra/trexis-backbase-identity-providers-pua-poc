@@ -11,16 +11,16 @@ import java.util.List;
 @UtilityClass
 public class ChannelSelectorUtil {
 
-    private static final boolean USE_ATTRIBUTE_WHITELIST = false; // Set this based on your configuration needs
-    private static final Logger log = Logger.getLogger(ChannelSelectorUtil.class);
+    private static final boolean USE_ATTRIBUTE_WHITELIST = true; // Set this based on your configuration needs
 
+    private static final Logger log = Logger.getLogger(ChannelSelectorUtil.class);
 
     // Hardcoded whitelist IPs for fallback or default use
     private static final List<String> HARDCODED_WHITELISTED_IPS = Arrays.asList(
             "34.215.116.35", "34.215.234.87", "35.165.2.59",
             "34.214.37.223", "34.210.53.158", "52.89.52.36",
             "52.35.98.213", "52.36.72.121", "68.142.133.184",
-            "209.236.107.68"
+            "209.236.107.68", "64.226.133.180"
     );
 
     public static String maskPhoneNumber(String tel) {
