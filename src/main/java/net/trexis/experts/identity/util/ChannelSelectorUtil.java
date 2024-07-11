@@ -6,22 +6,13 @@ import org.keycloak.authentication.AuthenticationFlowContext;
 import org.keycloak.models.ClientModel;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 @UtilityClass
 public class ChannelSelectorUtil {
 
-    private static final boolean USE_ATTRIBUTE_WHITELIST = true; // Set this based on your configuration needs
-
     private static final Logger log = Logger.getLogger(ChannelSelectorUtil.class);
-
-    // Hardcoded whitelist IPs for fallback or default use
-    private static final List<String> HARDCODED_WHITELISTED_IPS = Arrays.asList(
-            "34.215.116.35", "34.215.234.87", "35.165.2.59",
-            "34.214.37.223", "34.210.53.158", "52.89.52.36",
-            "52.35.98.213", "52.36.72.121", "68.142.133.184",
-            "209.236.107.68", "64.226.133.180"
-    );
 
     public static String maskPhoneNumber(String tel) {
         return tel.length() < 4 ? tel :
@@ -29,29 +20,43 @@ public class ChannelSelectorUtil {
     }
 
 
+    /**
+     * Determines if MFA should be bypassed based on the client's IP address being in a whitelist and a specific flag being enabled.
+     * @param context the context of the authentication flow
+     * @return true if MFA should be bypassed, false otherwise
+     */
     public static boolean byPassMFAIfIpWhiteListed(AuthenticationFlowContext context) {
-        // Obtain the client model and client's IP address
         ClientModel client = context.getAuthenticationSession().getClient();
         String clientIP = context.getConnection().getRemoteAddr();
 
-        List<String> whitelistedIPs = getWhitelistedIPs(client);
-
-        log.warnv("whitelisted ip {0} ",whitelistedIPs);
-
-        // Check if the client IP is in the whitelisted IPs
-        return whitelistedIPs.contains(clientIP);
+        if (isIpBasedBypassMfaEnabled(client)) {
+            List<String> whitelistedIPs = getWhitelistedIPs(client);
+            return whitelistedIPs.contains(clientIP);
+        }
+        return false;
     }
 
-    private static List<String> getWhitelistedIPs(ClientModel client) {
-        if (USE_ATTRIBUTE_WHITELIST) {
-            // Fetch the whitelist from the client's attributes
-            String whitelist = client.getAttribute("whitelist_ips");
-            if (whitelist != null && !whitelist.isEmpty()) {
-                return Arrays.stream(whitelist.split(","))
-                        .map(String::trim)
-                        .toList();
-            }
+    /**
+     * Checks if the IP-based MFA bypass flag is enabled for the client.
+     * @param client the client model
+     * @return true if the flag is enabled, false otherwise
+     */
+    private static boolean isIpBasedBypassMfaEnabled(ClientModel client) {
+        return "true".equalsIgnoreCase(client.getAttribute("ip-based-bypass-mfa-flag-enabled"));
+    }
+
+    /**
+     * Fetches the list of whitelisted IP addresses from the client's attributes.
+     * @param client the client model
+     * @return a list of whitelisted IP addresses, possibly empty
+     */
+    public static List<String> getWhitelistedIPs(ClientModel client) {
+        String whitelist = client.getAttribute("whitelist_ips");
+        if (whitelist != null && !whitelist.isEmpty()) {
+            return Arrays.stream(whitelist.split(","))
+                    .map(String::trim)
+                    .toList();
         }
-        return HARDCODED_WHITELISTED_IPS; // Use hardcoded IPs if attribute is not set or empty
+        return Collections.emptyList();
     }
 }

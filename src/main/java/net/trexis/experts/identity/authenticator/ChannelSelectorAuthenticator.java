@@ -66,8 +66,7 @@ public class ChannelSelectorAuthenticator implements Authenticator {
             return;
         }
 
-        // by pass the MFA if ip white listed
-        log.warnv("IP {} is whitelisted; skipping MFA for user {}", context.getConnection().getRemoteAddr(), context.getUser().getUsername());
+        // by pass the MFA if ip white listed and bypass-mfa-flag-enabled
         if (ChannelSelectorUtil.byPassMFAIfIpWhiteListed(context)) {
             log.debugv("IP {} is whitelisted; skipping MFA for user {}", context.getConnection().getRemoteAddr(), context.getUser().getUsername());
             context.success();
