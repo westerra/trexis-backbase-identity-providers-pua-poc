@@ -3,7 +3,6 @@ package net.trexis.experts.identity.authenticator;
 import org.keycloak.forms.login.freemarker.FreeMarkerLoginFormsProvider;
 import org.keycloak.models.ClientModel;
 import org.keycloak.models.KeycloakSession;
-import org.keycloak.models.UserModel;
 import org.keycloak.theme.FreeMarkerUtil;
 
 import javax.ws.rs.core.Response;
@@ -15,9 +14,18 @@ public class CustomLoginFormsProvider extends FreeMarkerLoginFormsProvider {
         super(session, freeMarkerUtil);
     }
 
+    // Method for handling form rendering
     @Override
-    public Response createResponse(UserModel.RequiredAction action) {
+    public Response createForm(String form) {
         // Access the client attributes
+        addCustomMessagesToAttributes();
+
+        // Proceed with the original behavior
+        return super.createForm(form);
+    }
+
+    // Helper method to add custom messages to the Freemarker context
+    private void addCustomMessagesToAttributes() {
         ClientModel client = session.getContext().getClient();
 
         // Retrieve the 'information_message' attribute
@@ -31,9 +39,5 @@ public class CustomLoginFormsProvider extends FreeMarkerLoginFormsProvider {
         if (maintenanceAlertMessage != null) {
             attributes.put("maintenanceAlertMessage", maintenanceAlertMessage);
         }
-
-        // Proceed with the original behavior
-        return super.createResponse(action);
     }
-
 }
