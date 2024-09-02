@@ -65,7 +65,7 @@ public class ChannelSelectorAuthenticator implements Authenticator {
         if(MfaAttributeEnum.ALWAYS_FALSE.getValue().equalsIgnoreCase(context.getUser().getFirstAttribute(Constants.USER_ATTRIBUTE_MFA_REQUIRED))) {
             log.info("MFA required attribute is alwaysFalse, NOT required to do MFA");
             context.success();
-            checkAndDisplayInformationMessage(context);
+            //checkAndDisplayInformationMessage(context);
             return;
         }
 
@@ -73,14 +73,14 @@ public class ChannelSelectorAuthenticator implements Authenticator {
         if (ChannelSelectorUtil.byPassMFAIfIpWhiteListed(context)) {
             log.debugv("IP {} is whitelisted; skipping MFA for user {}", context.getConnection().getRemoteAddr(), context.getUser().getUsername());
             context.success();
-            checkAndDisplayInformationMessage(context);
+            //checkAndDisplayInformationMessage(context);
             return;
         }
 
         //If MFA required attribute is false, We need to compare with last login IP addresses
         if(!mfaIsRequired(context.getUser()) && checkLastValidLogin(context)) {
             context.success();
-            checkAndDisplayInformationMessage(context);
+            //checkAndDisplayInformationMessage(context);
             return;
         } else if(MfaAttributeEnum.FALSE.getValue().equalsIgnoreCase(context.getUser().getFirstAttribute(Constants.USER_ATTRIBUTE_MFA_REQUIRED))){
             log.warn("Setting MFA required attribute to true");
@@ -119,6 +119,7 @@ public class ChannelSelectorAuthenticator implements Authenticator {
         context.challenge(challenge);
     }
 
+    /*
     private void checkAndDisplayInformationMessage(AuthenticationFlowContext context) {
         UserModel user = context.getUser();
 
@@ -141,7 +142,7 @@ public class ChannelSelectorAuthenticator implements Authenticator {
             context.success(); // Log in the user directly
         }
     }
-
+*/
 
 
     private boolean checkLastValidLogin(AuthenticationFlowContext context) {
