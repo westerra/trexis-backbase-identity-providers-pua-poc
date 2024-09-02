@@ -4,4 +4,6 @@ net.trexis.experts.identity.authenticator.OtpAuthenticatorFactory
 net.trexis.experts.identity.authenticator.ChannelSelectorAuthenticatorFactory
 net.trexis.experts.identity.authenticator.EvaluateRestrictedAuthenticatorFactory
 net.trexis.experts.identity.authenticator.RebaseAuthenticatorFactory
+net.trexis.experts.identity.authenticator.InformationalMessageAuthenticatorFactory
+
 
