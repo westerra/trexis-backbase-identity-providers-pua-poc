@@ -64,8 +64,7 @@ public class ChannelSelectorAuthenticator implements Authenticator {
 
         if(MfaAttributeEnum.ALWAYS_FALSE.getValue().equalsIgnoreCase(context.getUser().getFirstAttribute(Constants.USER_ATTRIBUTE_MFA_REQUIRED))) {
             log.info("MFA required attribute is alwaysFalse, NOT required to do MFA");
-            checkAndDisplayInformationMessage(context);
-            //context.success();
+            //checkAndDisplayInformationMessage(context);
             return;
         }
 
@@ -80,7 +79,7 @@ public class ChannelSelectorAuthenticator implements Authenticator {
         //If MFA required attribute is false, We need to compare with last login IP addresses
         if(!mfaIsRequired(context.getUser()) && checkLastValidLogin(context)) {
             context.success();
-            checkAndDisplayInformationMessage(context);
+            //checkAndDisplayInformationMessage(context);
             return;
         } else if(MfaAttributeEnum.FALSE.getValue().equalsIgnoreCase(context.getUser().getFirstAttribute(Constants.USER_ATTRIBUTE_MFA_REQUIRED))){
             log.warn("Setting MFA required attribute to true");
@@ -131,17 +130,13 @@ public class ChannelSelectorAuthenticator implements Authenticator {
             Response challenge = context.form()
                     .setAttribute("informationMessage", "Your Credit Card has been activated successfully. Please check your account for details.")
                     .createForm("information-message.ftl");
-            context.challenge(challenge); // Display the message and wait for user input
             user.setSingleAttribute(INFORMATION_MESSAGE_SEEN, "true");
-            return; // Stop the flow here to wait for user input
+            context.challenge(challenge);  // Challenge stops further execution until user input
         } else {
             log.info("User has already seen the informational message, proceeding with login.");
-            context.success(); // Log in the user directly if the message has already been seen
+            context.success(); // Proceed only if the message has already been acknowledged
         }
     }
-
-
-
 
     private boolean checkLastValidLogin(AuthenticationFlowContext context) {
         log.warn("checking last valid login!!");
