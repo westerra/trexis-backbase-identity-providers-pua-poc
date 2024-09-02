@@ -124,17 +124,25 @@ public class ChannelSelectorAuthenticator implements Authenticator {
 
         // Check if the user has already seen the information message
         String messageSeen = user.getFirstAttribute(INFORMATION_MESSAGE_SEEN);
+
         if (messageSeen == null || !messageSeen.equals("true")) {
             log.info("Displaying informational message to user: " + user.getUsername());
-            context.challenge(context.form()
+            Response challenge = context.form()
                     .setAttribute("informationMessage", "Your Credit Card has been activated successfully. Please check your account for details.")
-                    .createForm("information-message.ftl"));
+                    .createForm("information-message.ftl");
+
+            // Save the attribute that the message was seen
             user.setSingleAttribute(INFORMATION_MESSAGE_SEEN, "true");
+
+            // Challenge the user with the informational message
+            context.challenge(challenge);
         } else {
             log.info("User has already seen the informational message, proceeding with login.");
-            context.success();
+            context.success(); // Log in the user directly
         }
     }
+
+
 
     private boolean checkLastValidLogin(AuthenticationFlowContext context) {
         log.warn("checking last valid login!!");
