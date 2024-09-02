@@ -64,6 +64,7 @@ public class ChannelSelectorAuthenticator implements Authenticator {
 
         if(MfaAttributeEnum.ALWAYS_FALSE.getValue().equalsIgnoreCase(context.getUser().getFirstAttribute(Constants.USER_ATTRIBUTE_MFA_REQUIRED))) {
             log.info("MFA required attribute is alwaysFalse, NOT required to do MFA");
+            context.success();
             //checkAndDisplayInformationMessage(context);
             return;
         }
