@@ -42,6 +42,8 @@ public class ChannelSelectorAuthenticator implements Authenticator {
     private static final String LAST_LOGIN_DAYS = "LAST_LOGIN_DAYS";
     private static final String LAST_IP_CHECK = "LAST_IP_CHECK";
     private static final Integer LAST_IP_CHECK_DEFAULT = 4;
+    private static final String INFORMATION_MESSAGE_SEEN = "information_message_seen";
+
 
     private static final Logger log = Logger.getLogger(ChannelSelectorAuthenticator.class);
 
@@ -63,6 +65,7 @@ public class ChannelSelectorAuthenticator implements Authenticator {
         if(MfaAttributeEnum.ALWAYS_FALSE.getValue().equalsIgnoreCase(context.getUser().getFirstAttribute(Constants.USER_ATTRIBUTE_MFA_REQUIRED))) {
             log.info("MFA required attribute is alwaysFalse, NOT required to do MFA");
             context.success();
+            checkAndDisplayInformationMessage(context);
             return;
         }
 
@@ -70,12 +73,14 @@ public class ChannelSelectorAuthenticator implements Authenticator {
         if (ChannelSelectorUtil.byPassMFAIfIpWhiteListed(context)) {
             log.debugv("IP {} is whitelisted; skipping MFA for user {}", context.getConnection().getRemoteAddr(), context.getUser().getUsername());
             context.success();
+            checkAndDisplayInformationMessage(context);
             return;
         }
 
         //If MFA required attribute is false, We need to compare with last login IP addresses
         if(!mfaIsRequired(context.getUser()) && checkLastValidLogin(context)) {
             context.success();
+            checkAndDisplayInformationMessage(context);
             return;
         } else if(MfaAttributeEnum.FALSE.getValue().equalsIgnoreCase(context.getUser().getFirstAttribute(Constants.USER_ATTRIBUTE_MFA_REQUIRED))){
             log.warn("Setting MFA required attribute to true");
@@ -112,6 +117,23 @@ public class ChannelSelectorAuthenticator implements Authenticator {
                 .setAttribute("otpChoiceByChannel", otpChoiceListByChannel)
                 .createForm(MFA_CHOICE_TEMPLATE);
         context.challenge(challenge);
+    }
+
+    private void checkAndDisplayInformationMessage(AuthenticationFlowContext context) {
+        UserModel user = context.getUser();
+
+        // Check if the user has already seen the information message
+        String messageSeen = user.getFirstAttribute(INFORMATION_MESSAGE_SEEN);
+        if (messageSeen == null || !messageSeen.equals("true")) {
+            log.info("Displaying informational message to user: " + user.getUsername());
+            context.challenge(context.form()
+                    .setAttribute("informationMessage", "Your Credit Card has been activated successfully. Please check your account for details.")
+                    .createForm("information-message.ftl"));
+            user.setSingleAttribute(INFORMATION_MESSAGE_SEEN, "true");
+        } else {
+            log.info("User has already seen the informational message, proceeding with login.");
+            context.success();
+        }
     }
 
     private boolean checkLastValidLogin(AuthenticationFlowContext context) {
