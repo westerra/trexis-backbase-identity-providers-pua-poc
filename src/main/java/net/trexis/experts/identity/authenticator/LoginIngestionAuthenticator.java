@@ -8,9 +8,13 @@ import org.keycloak.models.RealmModel;
 import org.keycloak.models.UserModel;
 import org.keycloak.services.ServicesLogger;
 
+import javax.ws.rs.core.Response;
+
 public class LoginIngestionAuthenticator implements Authenticator {
 
     protected static ServicesLogger log;
+    private static final String INFORMATION_MESSAGE_SEEN = "information_message_seen";
+
 
     static {
         log = ServicesLogger.LOGGER;
@@ -26,9 +30,33 @@ public class LoginIngestionAuthenticator implements Authenticator {
         IngestionServiceProvider ingestionService = context.getSession().getProvider(IngestionServiceProvider.class);
         ingestionService.callIngestionService(context.getUser());
         context.success();
+        checkAndDisplayInformationMessage(context);
         log.info("Finished call to ingestion service");
     }
 
+
+    private void checkAndDisplayInformationMessage(AuthenticationFlowContext context) {
+        UserModel user = context.getUser();
+
+        // Check if the user has already seen the information message
+        String messageSeen = user.getFirstAttribute(INFORMATION_MESSAGE_SEEN);
+
+        if (messageSeen == null || !messageSeen.equals("true")) {
+            log.info("Displaying informational message to user: " + user.getUsername());
+            Response challenge = context.form()
+                    .setAttribute("informationMessage", "Your Credit Card has been activated successfully. Please check your account for details.")
+                    .createForm("information-message.ftl");
+
+            // Save the attribute that the message was seen
+            user.setSingleAttribute(INFORMATION_MESSAGE_SEEN, "true");
+
+            // Challenge the user with the informational message
+            context.challenge(challenge);
+        } else {
+            log.info("User has already seen the informational message, proceeding with login.");
+            context.success(); // Log in the user directly
+        }
+    }
     /**
      * Called from a form action invocation.
      */
