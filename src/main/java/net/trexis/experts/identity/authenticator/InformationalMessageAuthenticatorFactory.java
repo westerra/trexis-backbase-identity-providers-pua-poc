@@ -56,7 +56,12 @@ public class InformationalMessageAuthenticatorFactory implements AuthenticatorFa
 
     @Override
     public AuthenticationExecutionModel.Requirement[] getRequirementChoices() {
-        return new AuthenticationExecutionModel.Requirement[0];
+        return new AuthenticationExecutionModel.Requirement[]{
+                AuthenticationExecutionModel.Requirement.REQUIRED,
+                AuthenticationExecutionModel.Requirement.ALTERNATIVE,
+                AuthenticationExecutionModel.Requirement.DISABLED,
+                AuthenticationExecutionModel.Requirement.CONDITIONAL
+        };
     }
 
     @Override
@@ -66,7 +71,7 @@ public class InformationalMessageAuthenticatorFactory implements AuthenticatorFa
 
     @Override
     public String getHelpText() {
-        return "";
+        return "Displays an informational message to the user.";
     }
 
     @Override
