@@ -30,9 +30,8 @@ public class InformationalMessageAuthenticator implements Authenticator {
 
         if (messageSeen == null || !messageSeen.equals("true")) {
             log.info("Displaying informational message to user: " + user.getUsername());
-            // Display the informational message
+            // Display the informational message without hardcoding the message in the backend
             Response challenge = context.form()
-                    .setAttribute("informationMessage", "Your Credit Card has been activated successfully. Please check your account for details.")
                     .createForm("information-message.ftl");
 
             user.setSingleAttribute(INFORMATION_MESSAGE_SEEN, "true");
@@ -42,6 +41,7 @@ public class InformationalMessageAuthenticator implements Authenticator {
             context.success();
         }
     }
+
 
     @Override
     public void action(AuthenticationFlowContext context) {
