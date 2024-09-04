@@ -9,6 +9,7 @@ import org.keycloak.models.UserModel;
 import org.jboss.logging.Logger;
 
 import javax.ws.rs.core.Response;
+import java.net.URI;
 
 public class InformationalMessageAuthenticator implements Authenticator {
 
@@ -31,8 +32,18 @@ public class InformationalMessageAuthenticator implements Authenticator {
         if (messageSeen == null || !messageSeen.equals("true")) {
             log.info("Displaying informational message to user: " + user.getUsername());
             // Display the informational message without hardcoding the message in the backend
+
+            URI actionUrl = context.getUriInfo().getBaseUriBuilder()
+                    .path("/realms/")
+                    .path(context.getRealm().getName())
+                    .path("/protocol/openid-connect/auth")
+                    .build();  // This builds the URI directly
+
             Response challenge = context.form()
+                    .setActionUri(actionUrl)  // Set the URI as the action URL
                     .createForm("information-message.ftl");
+            context.challenge(challenge);
+
 
             user.setSingleAttribute(INFORMATION_MESSAGE_SEEN, "true");
             context.challenge(challenge);  // Stop further execution until user input
