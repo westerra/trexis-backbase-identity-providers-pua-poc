@@ -33,17 +33,9 @@ public class InformationalMessageAuthenticator implements Authenticator {
             log.info("Displaying informational message to user: " + user.getUsername());
             // Display the informational message without hardcoding the message in the backend
 
-            URI actionUrl = context.getUriInfo().getBaseUriBuilder()
-                    .path("/realms/")
-                    .path(context.getRealm().getName())
-                    .path("/protocol/openid-connect/auth")
-                    .build();  // This builds the URI directly
-
             Response challenge = context.form()
-                    .setActionUri(actionUrl)  // Set the URI as the action URL
                     .createForm("information-message.ftl");
             context.challenge(challenge);
-
 
             user.setSingleAttribute(INFORMATION_MESSAGE_SEEN, "true");
             context.challenge(challenge);  // Stop further execution until user input
