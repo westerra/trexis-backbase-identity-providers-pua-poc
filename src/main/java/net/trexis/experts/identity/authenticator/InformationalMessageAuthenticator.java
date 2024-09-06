@@ -9,7 +9,6 @@ import org.keycloak.models.UserModel;
 import org.jboss.logging.Logger;
 
 import javax.ws.rs.core.Response;
-import java.net.URI;
 
 public class InformationalMessageAuthenticator implements Authenticator {
 
