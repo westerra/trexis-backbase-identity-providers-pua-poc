@@ -91,6 +91,13 @@ public class OtpAuthenticator implements Authenticator {
     public void authenticate(AuthenticationFlowContext context) {
         log.warn("context config: " + context.getAuthenticatorConfig());
 
+        // by pass the MFA if ip white listed
+        if (ChannelSelectorUtil.byPassMFAIfIpWhiteListed(context)) {
+            log.debugv("IP {} is whitelisted; skipping MFA for user {}", context.getConnection().getRemoteAddr(), context.getUser().getUsername());
+            context.success();
+            return;
+        }
+
         if (mfaIsRequired(context.getUser())) {
             configureTotp(context);
             log.debugv("User {0} is required to do MFA", context.getUser().getUsername());
