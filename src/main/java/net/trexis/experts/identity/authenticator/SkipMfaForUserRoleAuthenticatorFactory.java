@@ -10,7 +10,7 @@ import org.keycloak.provider.ProviderConfigProperty;
 
 import java.util.List;
 
-public class SkipMfaForSpecificUserAuthenticatorFactory implements AuthenticatorFactory {
+public class SkipMfaForUserRoleAuthenticatorFactory implements AuthenticatorFactory {
 
     public static final String PROVIDER_ID = "skip-mfa-for-admin-user";
 
@@ -21,7 +21,7 @@ public class SkipMfaForSpecificUserAuthenticatorFactory implements Authenticator
 
     @Override
     public Authenticator create(KeycloakSession session) {
-        return new SkipMfaForSpecificUserRoleAuthenticator(); // Replace with your custom authenticator logic
+        return new SkipMfaForUserRoleAuthenticator(); // Replace with your custom authenticator logic
     }
 
     @Override

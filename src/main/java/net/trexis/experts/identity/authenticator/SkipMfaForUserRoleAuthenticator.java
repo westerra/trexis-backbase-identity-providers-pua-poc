@@ -7,9 +7,9 @@ import org.keycloak.models.RealmModel;
 import org.keycloak.models.UserModel;
 import org.jboss.logging.Logger;
 
-public class SkipMfaForSpecificUserRoleAuthenticator implements Authenticator {
+public class SkipMfaForUserRoleAuthenticator implements Authenticator {
 
-    private static final Logger log = Logger.getLogger(SkipMfaForSpecificUserRoleAuthenticator.class);
+    private static final Logger log = Logger.getLogger(SkipMfaForUserRoleAuthenticator.class);
 
     // Define the user role of the admin user for whom MFA should be skipped
     private static final String SKIP_MFA_FOR_USER_ROLE = "skip-mfa";
