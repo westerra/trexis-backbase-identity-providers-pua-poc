@@ -38,11 +38,13 @@ public class SkipMfaForUserRoleAuthenticator implements Authenticator {
         if (user.hasRole(skipMfaRole)) {
             log.info("Skipping MFA for user with role: " + user.getUsername());
             context.success();  // Skip MFA
+            return;
         } else {
             log.info("Proceeding with MFA for user: " + user.getUsername());
-            context.attempted();  // Proceed to MFA
+            context.attempted();  // Move to the next authenticator for MFA
         }
     }
+
 
     @Override
     public void action(AuthenticationFlowContext context) {
