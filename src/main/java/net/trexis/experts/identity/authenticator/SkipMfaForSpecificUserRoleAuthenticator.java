@@ -18,16 +18,31 @@ public class SkipMfaForSpecificUserRoleAuthenticator implements Authenticator {
     public void authenticate(AuthenticationFlowContext context) {
         UserModel user = context.getUser();
 
+        if (user == null) {
+            log.error("User is null, cannot proceed with authentication.");
+            context.attempted();  // Proceed with MFA since user is invalid
+            return;
+        }
+
+        // Retrieve the role from the realm
+        var skipMfaRole = context.getRealm().getRole(SKIP_MFA_FOR_USER_ROLE);
+
+        // Check if the role exists
+        if (skipMfaRole == null) {
+            log.warn("Role '" + SKIP_MFA_FOR_USER_ROLE + "' not found in realm.");
+            context.attempted();  // Proceed with MFA as the role doesn't exist
+            return;
+        }
+
         // Check if the user has the "skip-mfa" role
-        if (user.hasRole(context.getRealm().getRole(SKIP_MFA_FOR_USER_ROLE))) {
+        if (user.hasRole(skipMfaRole)) {
             log.info("Skipping MFA for user with role: " + user.getUsername());
-            context.success();
+            context.success();  // Skip MFA
         } else {
             log.info("Proceeding with MFA for user: " + user.getUsername());
-            context.attempted();
+            context.attempted();  // Proceed to MFA
         }
     }
-
 
     @Override
     public void action(AuthenticationFlowContext context) {

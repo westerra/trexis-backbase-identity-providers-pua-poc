@@ -12,7 +12,7 @@ import java.util.List;
 
 public class SkipMfaForSpecificUserAuthenticatorFactory implements AuthenticatorFactory {
 
-    public static final String PROVIDER_ID = "skip-mfa-for-specific-user-authenticator";
+    public static final String PROVIDER_ID = "skip-mfa-for-admin-user";
 
     @Override
     public String getId() {
@@ -71,7 +71,7 @@ public class SkipMfaForSpecificUserAuthenticatorFactory implements Authenticator
 
     @Override
     public String getHelpText() {
-        return "Skips MFA for a specific admin user but requires MFA for others.";
+        return "Skips MFA for a specific admin user";
     }
 
     @Override
