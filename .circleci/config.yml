@@ -18,6 +18,8 @@ jobs:
           Pass Github token
         type: env_var_name
     steps:
+      - setup_remote_docker:
+          version: default    
       - gh/setup
       - gh/clone
       - run:
@@ -39,7 +41,8 @@ jobs:
     steps:
       - attach_workspace:
           at: .
-
+      - setup_remote_docker:
+          version: default
       - checkout
       - aws-cli/install
 
