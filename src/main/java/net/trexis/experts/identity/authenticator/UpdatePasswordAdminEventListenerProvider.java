@@ -40,7 +40,7 @@ public class UpdatePasswordAdminEventListenerProvider implements EventListenerPr
             if(resourcePathArray.length==3 && resourcePathArray[2].equalsIgnoreCase("reset-password")) {
 
                 RealmModel realm = keycloakSession.realms().getRealm(adminEvent.getRealmId());
-                var user = keycloakSession.users().getUserById(resourcePathArray[1], realm);
+                var user = keycloakSession.users().getUserById(realm, resourcePathArray[1]);
 
                 if(user!=null && user.getEmail()!=null) {
 

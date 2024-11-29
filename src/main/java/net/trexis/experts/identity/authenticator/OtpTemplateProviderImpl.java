@@ -12,14 +12,13 @@ import org.keycloak.email.freemarker.FreeMarkerEmailTemplateProvider;
 import org.keycloak.email.freemarker.beans.ProfileBean;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.UserModel;
-import org.keycloak.theme.FreeMarkerUtil;
 
 import static java.util.Optional.ofNullable;
 
 public class OtpTemplateProviderImpl extends com.backbase.identity.authenticators.otp.OtpTemplateProvider {
 
-    public OtpTemplateProviderImpl(KeycloakSession session, FreeMarkerUtil freeMarker) {
-        super(session, freeMarker);
+    public OtpTemplateProviderImpl(KeycloakSession session) {
+        super(session);
     }
 
     public List<Content> getContent(OtpChoice otpChoice, String otp, UserModel userModel) {

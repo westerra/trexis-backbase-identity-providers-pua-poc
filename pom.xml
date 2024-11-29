@@ -16,7 +16,7 @@
         <trexis-bom.version>1.1.0-SNAPSHOT</trexis-bom.version>
 
         <!-- Backbase -->
-        <identity-bom.version>2023.02.18-LTS</identity-bom.version>
+        <identity-bom.version>2024.03-LTS</identity-bom.version>
 
         <jboss.logging.version>3.4.1.Final</jboss.logging.version>
         <lombok.version>1.18.24</lombok.version>
@@ -59,8 +59,18 @@
         <!-- BACKBASE -->
         <dependency>
             <groupId>com.backbase.identity</groupId>
-            <artifactId>backbase-identity</artifactId>
+            <artifactId>auth-server-providers</artifactId>
             <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.google.code.gson</groupId>
+            <artifactId>gson</artifactId>
+            <version>2.11.0</version>
+        </dependency>
+        <dependency>
+            <groupId>com.squareup.okhttp3</groupId>
+            <artifactId>okhttp</artifactId>
+            <version>4.12.0</version>
         </dependency>
 
         <!--KEYCLOAK-->
@@ -83,7 +93,19 @@
             <groupId>org.keycloak</groupId>
             <artifactId>keycloak-admin-client</artifactId>
         </dependency>
-
+        <dependency>
+            <groupId>org.keycloak</groupId>
+            <artifactId>keycloak-services</artifactId>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.freemarker</groupId>
+            <artifactId>freemarker</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.infinispan</groupId>
+            <artifactId>infinispan-core</artifactId>
+        </dependency>
         <!--Logging-->
         <dependency>
             <groupId>org.jboss.logging</groupId>
